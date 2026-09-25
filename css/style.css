@@ -400,7 +400,7 @@ img { -webkit-user-drag: none; user-select: none; }
 
 /* ---------- Mağaza ---------- */
 .modal-card.shop { max-width: 380px; padding: 22px 14px 14px; }
-.shop-scroll { width: 100%; max-height: 62vh; overflow-y: auto; padding: 10px 4px 6px; display: flex; flex-direction: column; gap: 12px; }
+.shop-scroll { width: 100%; max-height: 62vh; overflow-y: auto; overflow-x: hidden; padding: 10px 4px 6px; display: flex; flex-direction: column; gap: 12px; }
 .pack-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 10px; }
 .pack-card {
   position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -408,7 +408,7 @@ img { -webkit-user-drag: none; user-select: none; }
   padding: 12px 8px 10px; box-shadow: 0 4px 0 var(--outline);
 }
 .pack-card.has-badge { background: linear-gradient(#fff6d6, #ffe08a); }
-.pack-img { width: 64px; height: 64px; object-fit: contain; margin-bottom: 2px; }
+.pack-img { width: 76px; height: 76px; object-fit: contain; margin-bottom: 2px; }
 .pack-name { font-size: 14px; font-weight: 800; line-height: 1.1; text-align: center; min-height: 2.2em; display: grid; place-items: center; }
 .pack-coins { font-size: 17px; font-weight: 800; color: var(--outline); }
 .pack-card .btn { width: 100%; margin-top: 6px; }
@@ -419,7 +419,7 @@ img { -webkit-user-drag: none; user-select: none; }
 }
 .pack-badge.best { background: #7b4dff; }
 .pack-bonus {
-  position: absolute; top: 8px; right: -6px; transform: rotate(12deg);
+  position: absolute; top: 8px; right: -4px; transform: rotate(12deg);
   background: #37b24d; color: var(--white); font-size: 12px; font-weight: 800;
   padding: 1px 7px; border-radius: 8px; border: 2px solid var(--outline);
 }
@@ -428,7 +428,7 @@ img { -webkit-user-drag: none; user-select: none; }
   background: linear-gradient(135deg, #d6f5ff, #a8e4ff); border: 2.5px solid var(--outline);
   border-radius: 18px; padding: 10px; box-shadow: 0 4px 0 var(--outline);
 }
-.starter .pack-img { width: 56px; height: 56px; margin: 0; }
+.starter .pack-img { width: 64px; height: 64px; margin: 0; }
 .starter-info { flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
 .starter-info b { font-size: 16px; }
 .starter-info span { font-size: 13px; font-weight: 700; color: var(--outline); }

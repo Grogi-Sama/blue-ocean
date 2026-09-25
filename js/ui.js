@@ -233,10 +233,9 @@
   }
 
   // ---------- Mağaza (test) ----------
-  // Paket görselleri gelene kadar coin ikonu kullanılır (bkz. packIcon)
-  var PACK_ICONS = {};
+  // Paket görselleri: assets/shop/<paket id>.png
   function packIcon(id) {
-    return '<img class="pack-img" src="' + (PACK_ICONS[id] || "assets/ui/coin.png") + '" alt="">';
+    return '<img class="pack-img" src="assets/shop/' + id + '.png" alt="" draggable="false">';
   }
 
   // onClose: mağaza kapanınca dönülecek pencere (yoksa sadece kapanır)
