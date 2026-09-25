@@ -4,7 +4,6 @@
   var wrapEl = document.getElementById("boardWrap");
   var trayEl = document.getElementById("tray");
   var bankEl = document.getElementById("bank");
-  var hintEl = document.getElementById("hint");
 
   var S = null;        // aktif seviyenin durumu
   var unit = 40;       // 1 taş biriminin piksel karşılığı (ekrana göre hesaplanır)
@@ -25,11 +24,9 @@
       expanded: false,
       history: [],         // Geri Al için: sepete atılan son taşlar
       flying: 0,           // uçuş animasyonu süren taş sayısı
-      armed: null,         // seçim bekleyen joker (şimdilik yalnızca "remove")
       over: false
     };
     document.getElementById("gameLevel").textContent = level;
-    setHint("");
     layout();
     renderBoard();
     renderTray();
@@ -84,10 +81,6 @@
         var el = document.createElement("div");
         el.className = "tile in-tray" + (i === ghostIndex || t.ghost ? " ghost" : "");
         el.innerHTML = tileHtml(t.type);
-        (function (tile) {
-          el.addEventListener("pointerdown", function (e) { e.preventDefault(); onTrayTap(tile); });
-        })(t);
-        if (S.armed === "remove") el.classList.add("selectable");
         slot.appendChild(el);
       }
       trayEl.appendChild(slot);
@@ -116,7 +109,7 @@
 
   // ---------- Taş seçme ----------
   function pickTile(t, el) {
-    if (S.over || S.armed) { if (S.armed) RT.sfx("error"); return; }
+    if (S.over) return;
     if (S.tray.length >= S.trayMax) return;
     RT.sfx("tap");
 
@@ -198,7 +191,6 @@
       var c = b.querySelector(".j-count");
       c.textContent = n > 0 ? n : "+";
       c.classList.toggle("buy", n <= 0);
-      b.classList.toggle("armed", S && S.armed === j);
     });
   };
 
@@ -212,14 +204,21 @@
       renderBoard(); renderTray();
       return true;
     },
+    // Orijinaldeki gibi: sepetin baştaki (en soldaki) 3 taşı sepetin üstündeki
+    // bekleme alanına çıkar. Orada kilitli durup eşleri sepete gelince onlarla eşleşir.
     remove: function () {
-      if (S.tray.length === 0) { toast(RT.t("trayEmpty")); return false; }
-      if (S.bank.length >= RT.CONFIG.BANK_MAX) { toast(RT.t("bankFull")); return false; }
-      S.armed = "remove";
-      setHint(RT.t("pickTrayTile"));
-      renderTray();
-      RT.game.renderJokers();
-      return "armed"; // joker, taş seçilince harcanır
+      if (S.flying > 0) return false;
+      var ready = S.tray.filter(function (t) { return !t.ghost; });
+      if (ready.length === 0) { toast(RT.t("trayEmpty")); return false; }
+      var moving = ready.slice(0, 3);
+      if (S.bank.length + moving.length > RT.CONFIG.BANK_MAX) { toast(RT.t("bankFull")); return false; }
+      moving.forEach(function (t) {
+        S.tray.splice(S.tray.indexOf(t), 1);
+        S.bank.push({ id: t.id, type: t.type });
+      });
+      S.history = []; // bekleme alanına çıkan taşlar geri alınamaz
+      renderTray(); renderBank();
+      return true;
     },
     shuffle: function () {
       var types = RT.shuffle(S.tiles.map(function (t) { return t.type; }));
@@ -239,9 +238,6 @@
 
   RT.game.useJoker = function (name) {
     if (!S || S.over) return;
-    // Silah zaten kuruluysa tekrar basmak iptal eder
-    if (S.armed === name) { cancelArm(); return; }
-    if (S.armed) cancelArm();
     if (RT.save.jokers[name] <= 0) { RT.ui.offerJoker(name); return; }
     var res = JOKERS[name]();
     if (res === true) {
@@ -252,26 +248,6 @@
     RT.game.renderJokers();
   };
 
-  function onTrayTap(tile) {
-    if (S.armed !== "remove" || tile.ghost) return;
-    S.tray.splice(S.tray.indexOf(tile), 1);
-    S.bank.push({ id: tile.id, type: tile.type });
-    S.history = S.history.filter(function (h) { return h.trayTile !== tile; });
-    RT.save.jokers.remove--;
-    RT.persist();
-    RT.sfx("joker");
-    cancelArm();
-    renderBank();
-  }
-
-  function cancelArm() {
-    S.armed = null;
-    setHint("");
-    renderTray();
-    RT.game.renderJokers();
-  }
-
-  function setHint(txt) { hintEl.textContent = txt; hintEl.classList.toggle("show", !!txt); }
   function toast(txt) { RT.sfx("error"); RT.ui.toast(txt); }
 
   document.querySelectorAll(".joker").forEach(function (b) {

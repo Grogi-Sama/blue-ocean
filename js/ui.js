@@ -24,6 +24,7 @@
     document.getElementById("menuLevel").textContent = s.level;
     var timer = document.querySelector("#menuLives .lives-timer");
     timer.textContent = s.lives < RT.CONFIG.LIVES_MAX ? RT.formatTime(RT.msToNextLife()) : "";
+    refreshDailyButton();
     var nl = document.getElementById("noLivesTimer");
     if (nl) nl.textContent = RT.formatTime(RT.msToNextLife());
   }
@@ -119,10 +120,30 @@
     );
   }
 
-  // Sahte reklam: gerçek reklam SDK'sı (ör. AdMob) mobil pakette eklenecek
-  function watchAd(onDone) {
-    openModal('<div class="m-emoji spin">📺</div><h2>' + RT.t("adPlaying") + '</h2><div class="ad-bar"><i></i></div>');
-    setTimeout(onDone, 2500);
+  // Sahte reklam: gerçek reklam SDK'sı (ör. AdMob "ödüllü reklam") mobil pakette
+  // eklenecek. Şimdilik AD_SKIP_SEC saniye geri sayım, sonra "Reklamı Geç" butonu;
+  // ödül butona basınca verilir.
+  var adTimer = null;
+  function watchAd(onReward) {
+    var left = RT.CONFIG.AD_SKIP_SEC;
+    handlers.skipAd = function () { clearInterval(adTimer); onReward(); };
+    openModal(
+      '<div class="ad-screen"><span class="ad-tag">' + RT.t("adTag") + '</span>' +
+      '<div class="m-emoji spin">📺</div><h2>' + RT.t("adPlaying") + "</h2></div>" +
+      '<div class="ad-bar"><i style="animation-duration:' + left + 's"></i></div>' +
+      '<button class="btn btn-soft ad-skip" data-m="skipAd" disabled>' + RT.t("adSkipIn", { s: left }) + "</button>",
+      { cls: "ad" }
+    );
+    var btn = card.querySelector(".ad-skip");
+    clearInterval(adTimer);
+    adTimer = setInterval(function () {
+      left--;
+      if (left > 0) { btn.textContent = RT.t("adSkipIn", { s: left }); return; }
+      clearInterval(adTimer);
+      btn.disabled = false;
+      btn.classList.add("ready");
+      btn.textContent = RT.t("adSkip") + " ⏭";
+    }, 1000);
   }
 
   // ---------- Mağaza (test) ----------
@@ -150,18 +171,56 @@
   var JOKER_NAME_KEY = { undo: "jUndo", remove: "jRemove", shuffle: "jShuffle", expand: "jExpand" };
   RT.ui.offerJoker = function (name) {
     handlers.close = closeModal;
+    function grant() { RT.save.jokers[name]++; RT.persist(); closeModal(); refreshHud(); RT.game.renderJokers(); }
     handlers.buyJoker = function () {
       if (!RT.spendCoins(RT.CONFIG.JOKER_PRICE)) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(); return; }
-      RT.save.jokers[name]++; RT.persist(); closeModal(); refreshHud(); RT.game.renderJokers();
+      grant();
     };
+    handlers.adJoker = function () { watchAd(function () { grant(); RT.ui.toast(RT.t("jokerAdDone")); }); };
     openModal(
       '<button class="m-close" data-m="close">✕</button>' +
       "<h2>" + RT.t("jokerEmptyTitle") + "</h2>" +
       "<p>" + RT.t("jokerEmptyText", { name: RT.t(JOKER_NAME_KEY[name]) }) + "</p>" +
       '<button class="btn btn-play" data-m="buyJoker">' + RT.t("buyFor", { c: RT.CONFIG.JOKER_PRICE }) + "</button>" +
-      '<p class="small">🪙 ' + RT.save.coins + "</p>"
+      '<button class="btn btn-soft" data-m="adJoker">📺 ' + RT.t("watchAdJoker") + "</button>" +
+      '<p class="small">' + RT.t("yourCoins") + " 🪙 " + RT.save.coins + "</p>"
     );
   };
+
+  // ---------- 7 günlük giriş takvimi ----------
+  function showDaily() {
+    var R = RT.CONFIG.DAILY_REWARDS, claimed = RT.save.daily.claimed, can = RT.dailyAvailable();
+    handlers.close = closeModal;
+    handlers.claim = function () {
+      var got = RT.claimDaily();
+      if (!got) return;
+      RT.sfx("win");
+      refreshHud();
+      showDaily();
+      RT.ui.toast(RT.t("dailyGot", { n: got }));
+    };
+    var cells = R.map(function (c, i) {
+      var state = i < claimed ? "done" : (i === claimed && can ? "today" : "locked");
+      return '<div class="day ' + state + (i === R.length - 1 ? " big" : "") + '">' +
+        "<small>" + RT.t("day", { n: i + 1 }) + "</small>" +
+        '<span class="day-coin">' + (state === "done" ? "✅" : "🪙") + "</span>" +
+        "<b>" + c + "</b></div>";
+    }).join("");
+    openModal(
+      '<button class="m-close" data-m="close">✕</button>' +
+      "<h2>" + RT.t("dailyTitle") + "</h2>" +
+      '<p class="small">' + RT.t("dailyText") + "</p>" +
+      '<div class="days">' + cells + "</div>" +
+      (can ? '<button class="btn btn-play" data-m="claim">' + RT.t("claim") + "</button>"
+           : '<p class="small">' + RT.t(RT.dailyFinished() ? "dailyDone" : "dailyComeBack") + "</p>")
+    );
+  }
+
+  function refreshDailyButton() {
+    var b = document.getElementById("dailyBtn");
+    b.hidden = RT.dailyFinished();
+    b.classList.toggle("has-reward", RT.dailyAvailable());
+  }
 
   // ---------- Ayarlar ----------
   function showSettings() {
@@ -223,9 +282,11 @@
     );
   }
   function finishTutorial() {
+    var first = !RT.save.tutorialSeen;
     RT.save.tutorialSeen = true;
     RT.persist();
     closeModal();
+    if (first && RT.dailyAvailable()) showDaily(); // ilk açılışta eğitimden sonra 1. günün ödülü
   }
 
   // ---------- Menü butonları ----------
@@ -234,6 +295,7 @@
     "open-tutorial": function () { showTutorial(0); },
     "open-settings": showSettings,
     "open-shop": showShop,
+    "open-daily": showDaily,
     pause: showPause
   };
   document.querySelectorAll("[data-action]").forEach(function (b) {
@@ -263,4 +325,5 @@
   RT.applyI18n();
   refreshHud();
   if (!RT.save.tutorialSeen) showTutorial(0);
+  else if (RT.dailyAvailable()) showDaily(); // her gün ilk açılışta takvim kendiliğinden açılır
 })();

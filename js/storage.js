@@ -7,14 +7,16 @@
 
   // ---- Ekonomi ayarları (tek yerden değiştirilebilsin diye burada) ----
   RT.CONFIG = {
-    LIVES_MAX: 5,
+    LIVES_MAX: 3,
     LIFE_REGEN_MS: 30 * 60 * 1000,   // her 30 dakikada 1 can
-    START_COINS: 0,                   // coin yalnızca gerçek parayla alınır
+    START_COINS: 0,                   // coin: gerçek para + ilk 7 günün giriş takvimi (başka ücretsiz yol yok)
     START_JOKERS: 2,                  // her jokerden başlangıç stoku
-    JOKER_PRICE: 40,                  // 1 joker = 40 coin
-    REFILL_PRICE: 60,                 // canları tamamen doldurma = 60 coin
+    JOKER_PRICE: 5,                   // 1 joker = 5 coin (ya da 1 reklam)
+    REFILL_PRICE: 15,                 // canları tamamen doldurma = 15 coin
+    AD_SKIP_SEC: 5,                   // sahte reklamda "Reklamı Geç" butonu bu kadar saniye sonra çıkar
+    DAILY_REWARDS: [5, 5, 10, 10, 15, 15, 30], // 7 günlük giriş takvimi (toplam 90 coin)
     TRAY_SIZE: 7,
-    BANK_MAX: 3,                      // Taşı Kaldır ile bekletilebilecek en fazla taş
+    BANK_MAX: 6,                      // bekleme alanında en fazla 6 taş (= 2 kez Taşı Kaldır)
     COIN_PACKS: [                     // test mağazası paketleri
       { coins: 100, price: "₺29,99" },
       { coins: 300, price: "₺74,99" },
@@ -33,6 +35,7 @@
       },
       level: 1,
       tutorialSeen: false,
+      daily: { claimed: 0, lastDate: null }, // giriş takvimi: kaç gün alındı, en son hangi tarihte
       settings: { music: true, sound: true, lang: null }
     };
   }
@@ -50,6 +53,7 @@
   }
 
   RT.save = load();
+  if (RT.save.lives > RT.CONFIG.LIVES_MAX) RT.save.lives = RT.CONFIG.LIVES_MAX;
   RT.persist = function () {
     try { localStorage.setItem(KEY, JSON.stringify(RT.save)); } catch (e) {}
   };
@@ -92,6 +96,28 @@
     RT.save.coins -= n;
     RT.persist();
     return true;
+  };
+
+  // ---- 7 günlük giriş takvimi ----
+  // Oyuncu her gün (yerel tarih) bir sonraki günün ödülünü alabilir. Kaçırılan gün
+  // yanmaz — takvim kaldığı yerden devam eder; 7 ödül alınınca takvim kapanır.
+  RT.todayStr = function () {
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+  };
+  RT.dailyAvailable = function () {
+    var dl = RT.save.daily;
+    return dl.claimed < RT.CONFIG.DAILY_REWARDS.length && dl.lastDate !== RT.todayStr();
+  };
+  RT.dailyFinished = function () { return RT.save.daily.claimed >= RT.CONFIG.DAILY_REWARDS.length; };
+  RT.claimDaily = function () {
+    if (!RT.dailyAvailable()) return 0;
+    var amount = RT.CONFIG.DAILY_REWARDS[RT.save.daily.claimed];
+    RT.save.daily.claimed++;
+    RT.save.daily.lastDate = RT.todayStr();
+    RT.save.coins += amount;
+    RT.persist();
+    return amount;
   };
 
   RT.formatTime = function (ms) {

@@ -165,9 +165,7 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
 }
 .tile.in-tray { position: relative; --tile: calc(var(--slot) * .92); animation: land .15s; }
 .tile.in-tray.ghost { visibility: hidden; }
-.tile.in-tray.selectable { outline: 3px dashed var(--gold); outline-offset: 1px; animation: pulse .8s infinite; }
 @keyframes land { from { transform: scale(1.12); } }
-@keyframes pulse { 50% { transform: scale(1.06); } }
 
 /* ---------- Jokerler ---------- */
 .jokers { display: flex; justify-content: space-around; padding: 4px 10px 14px; gap: 8px; }
@@ -177,7 +175,6 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
   display: flex; flex-direction: column; align-items: center; transition: transform .08s;
 }
 .joker:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--tile-edge); }
-.joker.armed { background: var(--gold); box-shadow: 0 5px 0 #d49a14; }
 .j-icon { font-size: 26px; line-height: 1.1; }
 .j-name { font-size: 12px; font-weight: 700; line-height: 1.1; white-space: nowrap; }
 .j-count {
@@ -187,12 +184,6 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
 }
 .j-count.buy { background: #37b24d; }
 
-.hint {
-  position: absolute; left: 50%; bottom: 190px; transform: translateX(-50%);
-  background: var(--ink); color: var(--white); padding: 6px 14px; border-radius: 12px;
-  font-size: 15px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .2s;
-}
-.hint.show { opacity: 1; }
 
 /* ---------- Modal ---------- */
 .modal-backdrop {
@@ -260,3 +251,32 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
   font-size: 15px; box-shadow: 0 4px 12px rgba(0,0,0,.25); white-space: nowrap;
 }
 .toast[hidden] { display: none; }
+
+/* ---------- Günlük ödül ---------- */
+.daily-btn { position: relative; max-width: 320px; font-size: 18px; padding: 8px 18px; }
+.daily-btn[hidden] { display: none; }
+.daily-btn.has-reward::after {
+  content: ""; position: absolute; top: -4px; right: -4px; width: 16px; height: 16px;
+  background: #ff3b30; border: 2px solid var(--white); border-radius: 50%;
+  animation: bob 1.2s ease-in-out infinite;
+}
+.days { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
+.day {
+  background: #eef3f5; border-radius: 14px; padding: 6px 2px;
+  display: flex; flex-direction: column; align-items: center; line-height: 1.1;
+}
+.day small { font-size: 12px; color: #5a7581; }
+.day .day-coin { font-size: 24px; }
+.day b { font-size: 16px; }
+.day.big { grid-column: span 2; background: #fff2cc; }
+.day.done { opacity: .55; }
+.day.today { background: var(--gold); box-shadow: 0 0 0 3px var(--coral); animation: pop 1.2s infinite; }
+.day.locked { filter: grayscale(.3); }
+
+/* ---------- Sahte reklam ---------- */
+.modal-card.ad { background: #1d2b33; color: var(--white); }
+.modal-card.ad h2 { color: var(--white); }
+.ad-screen { position: relative; width: 100%; padding: 24px 0 8px; }
+.ad-tag { position: absolute; top: 0; left: 0; font-size: 11px; background: var(--gold); color: var(--ink); padding: 1px 6px; border-radius: 4px; font-weight: 800; }
+.ad-skip { opacity: .55; }
+.ad-skip.ready { opacity: 1; }
