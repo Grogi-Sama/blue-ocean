@@ -3,7 +3,7 @@
 // coin/satın alma bilgisi mutlaka sunucu tarafına (hesap sistemine) taşınmalı —
 // localStorage kullanıcı tarafından kolayca değiştirilebilir.
 (function () {
-  var KEY = "reeftrio_save_v1";
+  var KEY = "blueocean_save_v1";
 
   // ---- Ekonomi ayarları (tek yerden değiştirilebilsin diye burada) ----
   RT.CONFIG = {

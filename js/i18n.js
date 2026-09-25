@@ -4,8 +4,10 @@ window.RT = window.RT || {};
 
 RT.STRINGS = {
   tr: {
-    gameTitle: "Üçlemece", // oyunun adı her iki dilde aynı
-    gameSubtitle: "Üçünü bul, resifi temizle!",
+    // Oyunun adı dile göre değişir (mağaza adlarıyla aynı)
+    gameTitle: "Üçlü Eşleştirme – Mavi Okyanus",
+    titleTop: "Üçlü Eşleştirme", titleMain: "Mavi Okyanus",
+    gameSubtitle: "Üçünü bul, okyanusu temizle!",
     level: "Seviye",
     play: "Oyna",
     tutorial: "Eğitim",
@@ -14,11 +16,11 @@ RT.STRINGS = {
     jUndo: "Geri Al", jRemove: "Taşı Kaldır", jShuffle: "Karıştır", jExpand: "Genişlet",
     music: "Müzik", sound: "Ses Efektleri", language: "Dil",
     on: "Açık", off: "Kapalı", close: "Kapat",
-    winTitle: "Harika!", winText: "Resifi tertemiz yaptın.",
+    winTitle: "Harika!", winText: "Okyanusu tertemiz yaptın.",
     nextLevel: "Sonraki Seviye", mainMenu: "Ana Menü",
     loseTitle: "Sepet Doldu!", loseText: "Bir can kaybettin. Tekrar dene!",
     retry: "Tekrar Dene",
-    discoverTitle: "Yeni Canlılar Keşfettin!", discoverText: "Bu taşlar artık resifte karşına çıkabilir.", discoverGo: "Harika, Oyna!",
+    discoverTitle: "Yeni Canlılar Keşfettin!", discoverText: "Bu taşlar artık okyanusta karşına çıkabilir.", discoverGo: "Harika, Oyna!",
     continueTitle: "Sepet Doldu!", continueText: "Reklam izle, son 3 taş tahtaya geri dönsün ve devam et.",
     continueAd: "İzle ve Devam Et", giveUp: "Vazgeç",
     pauseTitle: "Duraklatıldı", resume: "Devam Et",
@@ -54,8 +56,9 @@ RT.STRINGS = {
     t5Title: "Hazırsın!", t5Text: "Her seviye biraz daha zorlaşır. Sonu yok — bakalım ne kadar ilerleyeceksin?"
   },
   en: {
-    gameTitle: "Üçlemece",
-    gameSubtitle: "Find three, clear the reef!",
+    gameTitle: "Triple Match – Blue Ocean",
+    titleTop: "Triple Match", titleMain: "Blue Ocean",
+    gameSubtitle: "Find three, clear the ocean!",
     level: "Level",
     play: "Play",
     tutorial: "Tutorial",
@@ -64,11 +67,11 @@ RT.STRINGS = {
     jUndo: "Undo", jRemove: "Remove", jShuffle: "Shuffle", jExpand: "Expand",
     music: "Music", sound: "Sound Effects", language: "Language",
     on: "On", off: "Off", close: "Close",
-    winTitle: "Great!", winText: "You cleared the reef.",
+    winTitle: "Great!", winText: "You cleared the ocean.",
     nextLevel: "Next Level", mainMenu: "Main Menu",
     loseTitle: "Tray Full!", loseText: "You lost a life. Try again!",
     retry: "Try Again",
-    discoverTitle: "New Creatures Discovered!", discoverText: "These tiles can now appear on the reef.", discoverGo: "Awesome, Play!",
+    discoverTitle: "New Creatures Discovered!", discoverText: "These tiles can now appear in the ocean.", discoverGo: "Awesome, Play!",
     continueTitle: "Tray Full!", continueText: "Watch an ad to send your last 3 tiles back to the board and keep going.",
     continueAd: "Watch & Continue", giveUp: "Give Up",
     pauseTitle: "Paused", resume: "Resume",

@@ -1,4 +1,4 @@
-/* Üçlemece — oyun stili */
+/* Triple Match – Blue Ocean — oyun stili */
 :root {
   --sea-top: #5fd3e6;
   --sea-mid: #1f8fb3;
@@ -114,6 +114,12 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
 .logo-icons img:nth-child(3) { animation-delay: -2s; }
 img { -webkit-user-drag: none; user-select: none; }
 .logo h1 { margin: 0; font-size: 44px; font-weight: 800; line-height: 1.05; text-shadow: 0 4px 0 rgba(0,0,0,.18); }
+.logo-top {
+  display: inline-block; margin-bottom: 2px; padding: 2px 14px; border-radius: 999px;
+  background: var(--gold); color: var(--outline); border: 2.5px solid var(--outline);
+  font-size: 16px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase;
+  box-shadow: 0 3px 0 var(--outline);
+}
 .subtitle { margin: 4px 0 0; font-size: 18px; opacity: .95; }
 @keyframes bob { 50% { transform: translateY(-8px); } }
 .level-badge {
