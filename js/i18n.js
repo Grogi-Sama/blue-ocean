@@ -4,7 +4,7 @@ window.RT = window.RT || {};
 
 RT.STRINGS = {
   tr: {
-    gameTitle: "Mercan Üçlüsü",
+    gameTitle: "Üçlemece", // oyunun adı her iki dilde aynı
     gameSubtitle: "Üçünü bul, resifi temizle!",
     level: "Seviye",
     play: "Oyna",
@@ -54,7 +54,7 @@ RT.STRINGS = {
     t5Title: "Hazırsın!", t5Text: "Her seviye biraz daha zorlaşır. Sonu yok — bakalım ne kadar ilerleyeceksin?"
   },
   en: {
-    gameTitle: "Reef Trio",
+    gameTitle: "Üçlemece",
     gameSubtitle: "Find three, clear the reef!",
     level: "Level",
     play: "Play",
