@@ -88,6 +88,19 @@
     );
   };
 
+  // ---------- Sepet doldu: reklam izle, devam et ----------
+  RT.ui.showContinue = function (onContinue, onGiveUp) {
+    handlers.continueAd = function () { watchAd(function () { closeModal(); onContinue(); }); };
+    handlers.giveUp = function () { closeModal(); onGiveUp(); };
+    openModal(
+      '<div class="m-emoji">🫧</div>' +
+      "<h2>" + RT.t("continueTitle") + "</h2>" +
+      "<p>" + RT.t("continueText") + "</p>" +
+      '<button class="btn btn-play" data-m="continueAd">📺 ' + RT.t("continueAd") + "</button>" +
+      '<button class="btn btn-soft" data-m="giveUp">' + RT.t("giveUp") + "</button>"
+    );
+  };
+
   // ---------- Duraklatma ----------
   function showPause() {
     handlers.resume = closeModal;

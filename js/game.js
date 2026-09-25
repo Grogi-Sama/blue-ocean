@@ -22,6 +22,8 @@
       bank: [],            // Taşı Kaldır ile bekletilen taşlar
       trayMax: RT.CONFIG.TRAY_SIZE,
       expanded: false,
+      continued: false,    // "Reklam izle, devam et" bu seviyede kullanıldı mı
+      pickSeq: 0,          // sepete atılma sırası (devam ederken en son atılanları bulmak için)
       history: [],         // Geri Al için: sepete atılan son taşlar
       flying: 0,           // uçuş animasyonu süren taş sayısı
       over: false
@@ -116,7 +118,7 @@
     var from = el.getBoundingClientRect();
     S.tiles.splice(S.tiles.indexOf(t), 1);
     var idx = insertIndex(t.type);
-    var trayTile = { id: t.id, type: t.type, ghost: true };
+    var trayTile = { id: t.id, type: t.type, ghost: true, orig: t, seq: ++S.pickSeq };
     S.tray.splice(idx, 0, trayTile);
     S.history.push({ tile: t, trayTile: trayTile });
     S.flying++;
@@ -179,9 +181,35 @@
       setTimeout(function () { RT.sfx("win"); RT.ui.showWin(S.level); }, 350);
     } else if (S.tray.length >= S.trayMax) {
       S.over = true;
-      RT.spendLife();
-      setTimeout(function () { RT.sfx("lose"); RT.ui.showLose(S.level); }, 350);
+      if (!S.continued) {
+        // Seviye başına 1 kez: reklam izlerse devam, izlemezse kaybeder
+        setTimeout(function () { RT.sfx("error"); RT.ui.showContinue(continueLevel, loseLevel); }, 350);
+      } else {
+        setTimeout(loseLevel, 350);
+      }
     }
+  }
+
+  function loseLevel() {
+    RT.spendLife();
+    RT.sfx("lose");
+    RT.ui.showLose(S.level);
+  }
+
+  // Sepete en son atılan 3 taş, alındıkları yere en üst katmandan geri döner
+  // (üstleri açık olur, hemen tekrar alınabilirler)
+  function continueLevel() {
+    S.continued = true;
+    var top = S.tiles.reduce(function (m, t) { return Math.max(m, t.layer); }, 0);
+    var back = S.tray.slice().sort(function (a, b) { return b.seq - a.seq; }).slice(0, 3);
+    back.forEach(function (tt, i) {
+      S.tray.splice(S.tray.indexOf(tt), 1);
+      tt.orig.layer = top + 1 + i;
+      S.tiles.push(tt.orig);
+    });
+    S.history = [];
+    S.over = false;
+    renderBoard(); renderTray();
   }
 
   // ---------- Jokerler ----------
