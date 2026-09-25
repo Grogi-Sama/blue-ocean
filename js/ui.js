@@ -107,7 +107,7 @@
       '<div class="m-emoji">🫧</div>' +
       "<h2>" + RT.t("continueTitle") + "</h2>" +
       "<p>" + RT.t("continueText") + "</p>" +
-      '<button class="btn btn-play" data-m="continueAd">📺 ' + RT.t("continueAd") + "</button>" +
+      '<button class="btn btn-blue" data-m="continueAd">📺 ' + RT.t("continueAd") + "</button>" +
       '<button class="btn btn-soft" data-m="giveUp">' + RT.t("giveUp") + "</button>"
     );
   };
@@ -119,7 +119,7 @@
     handlers.settings = showSettings;
     openModal(
       "<h2>" + RT.t("pauseTitle") + "</h2>" +
-      '<button class="btn btn-play" data-m="resume">' + RT.t("resume") + "</button>" +
+      '<button class="btn btn-blue" data-m="resume">' + RT.t("resume") + "</button>" +
       '<button class="btn btn-soft" data-m="settings">' + RT.t("settings") + "</button>" +
       '<button class="btn btn-danger" data-m="quit">' + RT.t("quitLevel") + "</button>" +
       '<p class="small">' + RT.t("quitWarn") + "</p>"
