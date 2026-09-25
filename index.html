@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b4f6c">
+  <title>Reef Trio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Arka plan: su gradyanı + yükselen kabarcıklar (dekoratif) -->
+  <div class="ocean-bg" aria-hidden="true"><div id="bubbles"></div></div>
+
+  <div id="app">
+
+    <!-- ============ ANA MENÜ ============ -->
+    <section id="screen-menu" class="screen active">
+      <header class="topbar">
+        <div class="pill lives-pill" id="menuLives">
+          <span class="heart">❤️</span><b class="lives-count">5</b>
+          <small class="lives-timer"></small>
+        </div>
+        <button class="pill coin-pill" data-action="open-shop">
+          <span class="coin">🪙</span><b class="coin-count">0</b><span class="plus">+</span>
+        </button>
+      </header>
+
+      <div class="menu-center">
+        <div class="logo">
+          <div class="logo-emoji">🐚🐠⭐</div>
+          <h1 data-i18n="gameTitle">Mercan Üçlüsü</h1>
+          <p class="subtitle" data-i18n="gameSubtitle">Üçünü bul, resifi temizle!</p>
+        </div>
+
+        <div class="level-badge"><span data-i18n="level">Seviye</span> <b id="menuLevel">1</b></div>
+        <button class="btn btn-play" data-action="play">▶ <span data-i18n="play">Oyna</span></button>
+
+        <div class="menu-row">
+          <button class="btn btn-soft" data-action="open-tutorial">🎓 <span data-i18n="tutorial">Eğitim</span></button>
+          <button class="btn btn-soft" data-action="open-settings">⚙️ <span data-i18n="settings">Ayarlar</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ OYUN EKRANI ============ -->
+    <section id="screen-game" class="screen">
+      <header class="topbar">
+        <button class="icon-btn" data-action="pause" aria-label="Menü">☰</button>
+        <div class="level-title"><span data-i18n="level">Seviye</span> <b id="gameLevel">1</b></div>
+        <div class="pill lives-pill small"><span class="heart">❤️</span><b class="lives-count">5</b></div>
+      </header>
+
+      <div id="boardWrap"><div id="board"></div></div>
+
+      <!-- Taşı Kaldır jokeriyle çıkarılan, eşlerini bekleyen kilitli taşlar -->
+      <div id="bank" class="bank"></div>
+
+      <div id="tray" class="tray"></div>
+
+      <div class="jokers">
+        <button class="joker" data-joker="undo"><span class="j-icon">↩️</span><span class="j-name" data-i18n="jUndo">Geri Al</span><b class="j-count"></b></button>
+        <button class="joker" data-joker="remove"><span class="j-icon">🪝</span><span class="j-name" data-i18n="jRemove">Taşı Kaldır</span><b class="j-count"></b></button>
+        <button class="joker" data-joker="shuffle"><span class="j-icon">🌀</span><span class="j-name" data-i18n="jShuffle">Karıştır</span><b class="j-count"></b></button>
+        <button class="joker" data-joker="expand"><span class="j-icon">➕</span><span class="j-name" data-i18n="jExpand">Genişlet</span><b class="j-count"></b></button>
+      </div>
+      <div id="hint" class="hint"></div>
+    </section>
+
+    <!-- ============ MODALLAR ============ -->
+    <div id="modal" class="modal-backdrop" hidden>
+      <div class="modal-card" id="modalCard"></div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/level.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
