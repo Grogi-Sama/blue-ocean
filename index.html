@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=10">
+  <link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
   <!-- Arka plan: su gradyanı + yükselen kabarcıklar (dekoratif) -->
@@ -32,7 +32,7 @@
 
       <div class="menu-center">
         <div class="logo">
-          <img class="logo-img" src="assets/icon/logo-menu.jpg" alt="" draggable="false">
+          <div class="logo-icons"><img src="assets/tiles/clownfish.png" alt=""><img src="assets/tiles/pearl.png" alt=""><img src="assets/tiles/starfish.png" alt=""></div>
           <div class="logo-top" data-i18n="titleTop">Üçlü Eşleştirme</div>
           <h1 data-i18n="titleMain">Mavi Okyanus</h1>
           <p class="subtitle" data-i18n="gameSubtitle">Üçünü bul, okyanusu temizle!</p>
@@ -55,7 +55,12 @@
       <header class="topbar game-topbar">
         <div class="pill lives-pill small"><img class="heart" src="assets/ui/heart.png" alt="" draggable="false"><b class="lives-count">3</b></div>
         <div class="level-title"><span data-i18n="level">Seviye</span> <b id="gameLevel">1</b></div>
-        <button class="icon-btn" data-action="pause" aria-label="Menü"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+        <div class="topbar-right">
+          <button class="pill coin-pill small" data-action="open-shop">
+            <img class="coin" src="assets/ui/coin.png" alt="" draggable="false"><b class="coin-count">0</b><span class="plus">+</span>
+          </button>
+          <button class="icon-btn" data-action="pause" aria-label="Menü"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+        </div>
       </header>
 
       <div id="boardWrap"><div id="board"></div></div>
@@ -81,11 +86,11 @@
     <div id="toast" class="toast" hidden></div>
   </div>
 
-  <script src="js/i18n.js?v=10"></script>
-  <script src="js/storage.js?v=10"></script>
-  <script src="js/audio.js?v=10"></script>
-  <script src="js/level.js?v=10"></script>
-  <script src="js/game.js?v=10"></script>
-  <script src="js/ui.js?v=10"></script>
+  <script src="js/i18n.js?v=13"></script>
+  <script src="js/storage.js?v=13"></script>
+  <script src="js/audio.js?v=13"></script>
+  <script src="js/level.js?v=13"></script>
+  <script src="js/game.js?v=13"></script>
+  <script src="js/ui.js?v=13"></script>
 </body>
 </html>

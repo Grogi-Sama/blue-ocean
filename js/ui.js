@@ -20,7 +20,7 @@
     RT.tickLives();
     var s = RT.save;
     document.querySelectorAll(".lives-count").forEach(function (e) { e.textContent = s.lives; });
-    document.querySelectorAll(".coin-count").forEach(function (e) { e.textContent = s.coins; });
+    document.querySelectorAll(".coin-count").forEach(function (e) { e.textContent = shortNum(s.coins); });
     document.getElementById("menuLevel").textContent = s.level;
     var timer = document.querySelector("#menuLives .lives-timer");
     timer.textContent = s.lives < RT.CONFIG.LIVES_MAX ? RT.formatTime(RT.msToNextLife()) : "";
@@ -29,6 +29,13 @@
     if (nl) nl.textContent = RT.formatTime(RT.msToNextLife());
   }
   RT.ui.refreshHud = refreshHud;
+
+  // Üst bardaki sayılar dar alana sığsın: 1000 ve üstü kısaltılır (1250 -> 1.2K)
+  function shortNum(n) {
+    if (n < 1000) return String(n);
+    var k = Math.floor(n / 100) / 10;
+    return (k % 1 ? k.toFixed(1) : String(k)) + "K";
+  }
   setInterval(refreshHud, 1000);
 
   // ---------- Modal yardımcıları ----------
