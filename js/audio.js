@@ -11,10 +11,16 @@
       ctx = new (window.AudioContext || window.webkitAudioContext)();
     } catch (e) { return false; }
     master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
-    sfxGain = ctx.createGain(); sfxGain.gain.value = 0.5; sfxGain.connect(master);
+    sfxGain = ctx.createGain(); sfxGain.gain.value = sfxLevel(); sfxGain.connect(master);
     musicGain = ctx.createGain(); musicGain.gain.value = 0; musicGain.connect(master);
     return true;
   }
+
+  // Ayarlardaki 0-100 seviyeleri kazanca (gain) çevrilir
+  function sfxLevel() { return 0.6 * RT.save.settings.sfxVol / 100; }
+  function musicLevel() { return 1.0 * RT.save.settings.musicVol / 100; }
+
+  RT.setSfxVolume = function () { if (sfxGain) sfxGain.gain.value = sfxLevel(); };
 
   // Tarayıcılar sesi ancak ilk dokunuştan sonra açmaya izin veriyor
   RT.unlockAudio = function () {
@@ -56,7 +62,7 @@
   };
 
   RT.sfx = function (name) {
-    if (!RT.save.settings.sound || !ensure() || ctx.state !== "running") return;
+    if (!RT.save.settings.sfxVol || !ensure() || ctx.state !== "running") return;
     if (SFX[name]) SFX[name](ctx.currentTime);
   };
 
@@ -85,9 +91,10 @@
 
   RT.updateMusic = function () {
     if (!ctx) return;
-    var on = RT.save.settings.music && ctx.state === "running";
+    var on = RT.save.settings.musicVol > 0 && ctx.state === "running";
     musicGain.gain.cancelScheduledValues(ctx.currentTime);
-    musicGain.gain.linearRampToValueAtTime(on ? 0.8 : 0, ctx.currentTime + 1);
+    musicGain.gain.setValueAtTime(musicGain.gain.value, ctx.currentTime);
+    musicGain.gain.linearRampToValueAtTime(on ? musicLevel() : 0, ctx.currentTime + 0.4);
     if (on && !musicTimer) {
       playChord();
       musicTimer = setInterval(playChord, 7000);

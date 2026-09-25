@@ -25,6 +25,9 @@
     var timer = document.querySelector("#menuLives .lives-timer");
     timer.textContent = s.lives < RT.CONFIG.LIVES_MAX ? RT.formatTime(RT.msToNextLife()) : "";
     refreshDailyButton();
+    document.querySelectorAll(".lives-pill").forEach(function (p) {
+      p.classList.toggle("not-full", s.lives < RT.CONFIG.LIVES_MAX);
+    });
     var nl = document.getElementById("noLivesTimer");
     if (nl) nl.textContent = RT.formatTime(RT.msToNextLife());
   }
@@ -153,23 +156,39 @@
     );
   }
 
-  // ---------- Can bitti ----------
-  function showNoLives() {
-    handlers.ad = function () { watchAd(function () { RT.addLives(1); closeModal(); refreshHud(); RT.ui.toast(RT.t("adDone")); }); };
-    handlers.refill = function () {
-      if (!RT.spendCoins(RT.CONFIG.REFILL_PRICE)) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(); return; }
-      RT.addLives(RT.CONFIG.LIVES_MAX); closeModal(); refreshHud();
-    };
+  // ---------- Canlar penceresi ----------
+  // Can bittiğinde ve can göstergesine dokunulduğunda açılır: sıradaki canın
+  // süresi, reklamla +1 can (günlük sınırlı) ve eksik canları coinle doldurma.
+  function showLives() {
+    RT.tickLives();
+    var s = RT.save, full = s.lives >= RT.CONFIG.LIVES_MAX, price = RT.refillPrice(), adLeft = RT.adLivesLeft();
     handlers.close = closeModal;
+    handlers.ad = function () {
+      if (RT.adLivesLeft() <= 0) return;
+      watchAd(function () { RT.useAdLife(); refreshHud(); showLives(); RT.ui.toast(RT.t("adDone")); });
+    };
+    handlers.refill = function () {
+      if (!RT.spendCoins(RT.refillPrice())) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(); return; }
+      RT.addLives(RT.CONFIG.LIVES_MAX); refreshHud(); showLives();
+    };
+    var hearts = "";
+    for (var i = 0; i < RT.CONFIG.LIVES_MAX; i++) {
+      hearts += '<img class="lh' + (i < s.lives ? "" : " empty") + '" src="assets/ui/heart.png" alt="">';
+    }
     openModal(
       '<button class="m-close" data-m="close">✕</button>' +
-      '<div class="m-emoji">💔</div>' +
-      "<h2>" + RT.t("noLivesTitle") + "</h2>" +
-      "<p>" + RT.t("noLivesText", { t: '<b id="noLivesTimer">' + RT.formatTime(RT.msToNextLife()) + "</b>" }) + "</p>" +
-      '<button class="btn btn-play" data-m="ad">📺 ' + RT.t("watchAd") + "</button>" +
-      '<button class="btn btn-soft" data-m="refill">' + RT.t("refillCoins", { c: RT.CONFIG.REFILL_PRICE }) + "</button>"
+      "<h2>" + RT.t(s.lives <= 0 ? "noLivesTitle" : "livesTitle") + "</h2>" +
+      '<div class="lives-row">' + hearts + "</div>" +
+      (full
+        ? "<p>" + RT.t("livesFull") + "</p>"
+        : "<p>" + RT.t("noLivesText", { t: '<b id="noLivesTimer">' + RT.formatTime(RT.msToNextLife()) + "</b>" }) + "</p>" +
+          '<button class="btn btn-blue" data-m="ad"' + (adLeft ? "" : " disabled") + ">📺 " + RT.t("watchAd") + "</button>" +
+          '<p class="small">' + (adLeft ? RT.t("adLivesLeft", { n: adLeft }) : RT.t("adLivesNone")) + "</p>" +
+          '<button class="btn btn-soft" data-m="refill">' + RT.t("refillCoins", { c: price }) + "</button>")
     );
   }
+  RT.ui.showLives = showLives;
+  var showNoLives = showLives;
 
   // Sahte reklam: gerçek reklam SDK'sı (ör. AdMob "ödüllü reklam") mobil pakette
   // eklenecek. Şimdilik AD_SKIP_SEC saniye geri sayım, sonra "Reklamı Geç" butonu;
@@ -277,22 +296,36 @@
   function showSettings() {
     var st = RT.save.settings;
     handlers.close = function () { closeModal(); if (RT.game.isActive() && document.getElementById("screen-game").classList.contains("active")) showPause(); };
-    handlers.music = function () { st.music = !st.music; RT.persist(); RT.updateMusic(); showSettings(); };
-    handlers.sound = function () { st.sound = !st.sound; RT.persist(); showSettings(); };
     handlers.lang = function (b) { setLang(b.dataset.lang); showSettings(); };
-    function toggle(key, on) {
-      return '<div class="set-row"><span>' + RT.t(key) + '</span><button class="toggle' + (on ? " on" : "") +
-        '" data-m="' + key + '">' + RT.t(on ? "on" : "off") + "</button></div>";
+    function slider(key, labelKey, icon) {
+      var v = st[key];
+      return '<div class="set-slider"><div class="set-head"><span>' + icon + " " + RT.t(labelKey) + "</span>" +
+        '<b data-val="' + key + '">' + (v ? v + "%" : RT.t("off")) + "</b></div>" +
+        '<input type="range" min="0" max="100" step="5" value="' + v + '" data-vol="' + key + '" style="--p:' + v + '%"></div>';
     }
     openModal(
       '<button class="m-close" data-m="close">✕</button>' +
       "<h2>" + RT.t("settings") + "</h2>" +
-      toggle("music", st.music) + toggle("sound", st.sound) +
+      slider("musicVol", "music", "🎵") + slider("sfxVol", "sound", "🔊") +
       '<div class="set-row"><span>' + RT.t("language") + '</span><div class="seg">' +
       '<button class="' + (RT.lang === "tr" ? "on" : "") + '" data-m="lang" data-lang="tr">TR</button>' +
       '<button class="' + (RT.lang === "en" ? "on" : "") + '" data-m="lang" data-lang="en">EN</button>' +
       "</div></div>"
     );
+    // Çubuk hareket ettikçe seviye anında uygulanır; ses efektinde bırakınca örnek ses çalar
+    card.querySelectorAll("[data-vol]").forEach(function (inp) {
+      var key = inp.dataset.vol, label = card.querySelector('[data-val="' + key + '"]');
+      inp.addEventListener("input", function () {
+        st[key] = +inp.value;
+        inp.style.setProperty("--p", inp.value + "%");
+        label.textContent = st[key] ? st[key] + "%" : RT.t("off");
+        if (key === "musicVol") RT.updateMusic(); else RT.setSfxVolume();
+      });
+      inp.addEventListener("change", function () {
+        RT.persist();
+        if (key === "sfxVol") RT.sfx("match");
+      });
+    });
   }
 
   function setLang(l) {
@@ -346,6 +379,7 @@
     "open-tutorial": function () { showTutorial(0); },
     "open-settings": showSettings,
     "open-shop": showShop,
+    "open-lives": showLives,
     "open-daily": showDaily,
     pause: showPause
   };

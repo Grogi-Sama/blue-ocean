@@ -12,7 +12,9 @@
     START_COINS: 0,                   // coin: gerçek para + ilk 7 günün giriş takvimi (başka ücretsiz yol yok)
     START_JOKERS: 2,                  // her jokerden başlangıç stoku
     JOKER_PRICE: 5,                   // 1 joker = 5 coin (ya da 1 reklam)
-    REFILL_PRICE: 15,                 // canları tamamen doldurma = 15 coin
+    REFILL_PRICE: 15,                 // canları tamamen doldurma = 15 coin (üst sınır)
+    LIFE_PRICE: 6,                    // eksik can başına coin; 1 eksik = 6, 2 = 12, 3 = 15 (üst sınır)
+    AD_LIVES_PER_DAY: 5,              // günde en fazla bu kadar can reklamla alınabilir
     AD_SKIP_SEC: 5,                   // sahte reklamda "Reklamı Geç" butonu bu kadar saniye sonra çıkar
     DAILY_REWARDS: [5, 5, 10, 10, 15, 15, 30], // 7 günlük giriş takvimi (toplam 90 coin)
     TRAY_SIZE: 7,
@@ -37,7 +39,8 @@
       tutorialSeen: false,
       discovered: 16,                        // "Yeni canlı" penceresinde gösterilmiş taş sayısı
       daily: { claimed: 0, lastDate: null }, // giriş takvimi: kaç gün alındı, en son hangi tarihte
-      settings: { music: true, sound: true, lang: null }
+      adLives: { date: null, count: 0 },    // bugün reklamla alınan can sayısı
+      settings: { musicVol: 50, sfxVol: 80, lang: null } // ses seviyeleri 0-100
     };
   }
 
@@ -49,6 +52,10 @@
     // Yeni alanlar eklendiğinde eski kayıtlar bozulmasın
     for (var k in def) if (d[k] === undefined) d[k] = def[k];
     for (var j in def.jokers) if (d.jokers[j] === undefined) d.jokers[j] = def.jokers[j];
+    // Eski kayıtlardaki açık/kapalı ayarlarını ses seviyesine çevir
+    if (d.settings.music === false && d.settings.musicVol === undefined) d.settings.musicVol = 0;
+    if (d.settings.sound === false && d.settings.sfxVol === undefined) d.settings.sfxVol = 0;
+    delete d.settings.music; delete d.settings.sound;
     for (var s in def.settings) if (d.settings[s] === undefined) d.settings[s] = def.settings[s];
     return d;
   }
@@ -90,6 +97,25 @@
     if (RT.save.lives >= RT.CONFIG.LIVES_MAX) RT.save.lastRegen = Date.now();
     RT.save.lives = Math.max(0, RT.save.lives - 1);
     RT.persist();
+  };
+
+  // Eksik canları doldurmanın coin fiyatı (can doluysa 0)
+  RT.refillPrice = function () {
+    var missing = RT.CONFIG.LIVES_MAX - RT.save.lives;
+    return Math.min(RT.CONFIG.REFILL_PRICE, Math.max(0, missing) * RT.CONFIG.LIFE_PRICE);
+  };
+
+  // Reklamla can: günlük sınır (gün değişince sayaç sıfırlanır)
+  RT.adLivesLeft = function () {
+    var a = RT.save.adLives;
+    if (a.date !== RT.todayStr()) return RT.CONFIG.AD_LIVES_PER_DAY;
+    return Math.max(0, RT.CONFIG.AD_LIVES_PER_DAY - a.count);
+  };
+  RT.useAdLife = function () {
+    var a = RT.save.adLives;
+    if (a.date !== RT.todayStr()) { a.date = RT.todayStr(); a.count = 0; }
+    a.count++;
+    RT.addLives(1);
   };
 
   RT.spendCoins = function (n) {
