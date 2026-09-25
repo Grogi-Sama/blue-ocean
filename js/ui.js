@@ -69,7 +69,7 @@
       '<div class="m-emoji">🏆</div>' +
       "<h2>" + RT.t("winTitle") + "</h2>" +
       "<p>" + RT.t("level") + " " + level + " — " + RT.t("winText") + "</p>" +
-      '<button class="btn btn-play" data-m="next">' + RT.t("nextLevel") + "</button>" +
+      '<button class="btn btn-green" data-m="next">' + RT.t("nextLevel") + "</button>" +
       '<button class="btn btn-soft" data-m="menu">' + RT.t("mainMenu") + "</button>",
       { cls: "win" }
     );
@@ -109,7 +109,7 @@
     openModal(
       "<h2>" + RT.t("pauseTitle") + "</h2>" +
       '<button class="btn btn-play" data-m="resume">' + RT.t("resume") + "</button>" +
-      '<button class="btn btn-soft" data-m="settings">⚙️ ' + RT.t("settings") + "</button>" +
+      '<button class="btn btn-soft" data-m="settings">' + RT.t("settings") + "</button>" +
       '<button class="btn btn-danger" data-m="quit">' + RT.t("quitLevel") + "</button>" +
       '<p class="small">' + RT.t("quitWarn") + "</p>"
     );
@@ -224,7 +224,7 @@
       "<h2>" + RT.t("dailyTitle") + "</h2>" +
       '<p class="small">' + RT.t("dailyText") + "</p>" +
       '<div class="days">' + cells + "</div>" +
-      (can ? '<button class="btn btn-play" data-m="claim">' + RT.t("claim") + "</button>"
+      (can ? '<button class="btn btn-green" data-m="claim">' + RT.t("claim") + "</button>"
            : '<p class="small">' + RT.t(RT.dailyFinished() ? "dailyDone" : "dailyComeBack") + "</p>")
     );
   }

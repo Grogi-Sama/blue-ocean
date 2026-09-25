@@ -64,6 +64,7 @@ try {
                 if (-not $mime) { $mime = "application/octet-stream" }
                 $bytes = [System.IO.File]::ReadAllBytes($fullPath)
                 $response.ContentType = $mime
+                $response.Headers.Add("Cache-Control", "no-store")
                 $response.ContentLength64 = $bytes.Length
                 $response.OutputStream.Write($bytes, 0, $bytes.Length)
             } else {

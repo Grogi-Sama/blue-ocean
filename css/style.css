@@ -8,6 +8,7 @@
   --tile-edge: #d8c39a;
   --tile-covered: #9fb4bd;
   --ink: #0d3446;
+  --outline: #123a4d;  /* tüm butonların ortak kontur rengi */
   --coral: #ff7a59;
   --coral-dark: #d9573a;
   --gold: #ffc93c;
@@ -62,23 +63,35 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
   padding: 12px 16px; gap: 8px;
 }
 .pill {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--glass); backdrop-filter: blur(6px);
-  border: 1.5px solid rgba(255,255,255,.4);
-  color: var(--white); border-radius: 999px; padding: 4px 12px;
-  font-size: 18px; min-height: 38px;
+  position: relative; display: flex; align-items: center; gap: 6px;
+  background: linear-gradient(180deg, rgba(8,52,74,.55), rgba(4,32,48,.65));
+  border: 2px solid rgba(255,255,255,.55);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.18), 0 3px 0 rgba(0,0,0,.18);
+  color: var(--white); border-radius: 999px; padding: 3px 12px 3px 6px;
+  font-size: 19px; min-height: 40px;
 }
-.pill b { font-weight: 800; }
+.pill b { font-weight: 800; text-shadow: 0 2px 0 rgba(0,0,0,.25); }
 .pill small { font-size: 13px; opacity: .9; }
+.pill .heart, .pill .coin {
+  font-size: 22px; width: 30px; height: 30px; display: grid; place-items: center;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.25));
+}
 .pill .plus {
-  background: var(--gold); color: var(--ink); border-radius: 50%;
-  width: 20px; height: 20px; display: grid; place-items: center; font-weight: 800; font-size: 16px;
+  margin-left: 2px; width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(#7ee07a, #37b24d); border: 2px solid var(--outline);
+  color: var(--white); display: grid; place-items: center; font-weight: 800; font-size: 18px; line-height: 1;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.45);
 }
-.pill.small { font-size: 15px; min-height: 32px; }
+.pill.small { font-size: 16px; min-height: 34px; }
 .icon-btn {
-  width: 40px; height: 40px; border-radius: 12px; font-size: 20px;
-  background: var(--glass); color: var(--white); border: 1.5px solid rgba(255,255,255,.4);
+  width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+  background: linear-gradient(#fff8e6, #f0d9a8); color: var(--outline);
+  border: 2.5px solid var(--outline);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.8), 0 4px 0 var(--outline);
+  transition: transform .08s, box-shadow .08s;
 }
+.icon-btn:active { transform: translateY(3px); box-shadow: inset 0 2px 0 rgba(255,255,255,.8), 0 1px 0 var(--outline); }
+.icon-btn svg { width: 24px; height: 24px; }
 .level-title { color: var(--white); font-size: 20px; text-shadow: 0 2px 0 rgba(0,0,0,.2); }
 .level-title b { font-weight: 800; }
 
@@ -93,33 +106,54 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
 .subtitle { margin: 4px 0 0; font-size: 18px; opacity: .95; }
 @keyframes bob { 50% { transform: translateY(-8px); } }
 .level-badge {
-  background: var(--sand); border-radius: 14px; padding: 4px 18px; font-size: 20px;
-  box-shadow: 0 4px 0 var(--tile-edge);
+  background: linear-gradient(#fff8e6, #f0d9a8); border-radius: 999px; padding: 4px 22px; font-size: 20px;
+  border: 3px solid var(--outline); box-shadow: 0 4px 0 var(--outline);
 }
 .level-badge b { font-weight: 800; }
 .menu-row { display: flex; gap: 12px; width: 100%; max-width: 320px; }
 .menu-row .btn { flex: 1; }
 
-/* ---------- Butonlar ---------- */
+/* ---------- Butonlar ----------
+   Ortak dil: koyu kontur (--outline), üstte parlak yansıma (::before),
+   altta 3D kenar (box-shadow). Basınca buton kenarın içine "iner". */
 .btn {
-  display: block; width: 100%; max-width: 320px; padding: 12px 18px; border-radius: 18px;
-  font-size: 20px; font-weight: 700; transition: transform .08s;
+  --face1: #fff8e6; --face2: #f0d9a8; --edge: #b8935a; --txt: var(--outline);
+  position: relative; display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; max-width: 320px; padding: 12px 18px; border-radius: 20px;
+  font-size: 20px; font-weight: 800; color: var(--txt);
+  background: linear-gradient(180deg, var(--face1), var(--face2));
+  border: 3px solid var(--outline);
+  box-shadow: 0 6px 0 var(--outline), inset 0 -4px 0 var(--edge);
+  transition: transform .08s, box-shadow .08s;
+  isolation: isolate;
 }
-.btn:active { transform: translateY(3px); }
+.btn::before {
+  content: ""; position: absolute; left: 10px; right: 10px; top: 4px; height: 38%;
+  border-radius: 14px 14px 40% 40%; background: rgba(255,255,255,.45); z-index: -1;
+  pointer-events: none;
+}
+.btn:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--outline), inset 0 -2px 0 var(--edge); }
+.btn:disabled { filter: grayscale(.6); opacity: .7; }
+.btn svg { width: 24px; height: 24px; flex: none; }
 .btn-play {
-  background: var(--coral); color: var(--white); font-size: 26px; font-weight: 800;
-  box-shadow: 0 6px 0 var(--coral-dark);
+  --face1: #ffa176; --face2: #ff6b4a; --edge: #d9452c; --txt: var(--white);
+  font-size: 28px; padding: 14px 18px; text-shadow: 0 2px 0 rgba(120,30,10,.45);
 }
-.btn-play.small { font-size: 16px; padding: 6px 14px; width: auto; box-shadow: 0 4px 0 var(--coral-dark); }
-.btn-soft { background: var(--sand); box-shadow: 0 5px 0 var(--tile-edge); }
-.btn-danger { background: #ffe1da; color: var(--coral-dark); box-shadow: 0 5px 0 #f3b9aa; }
+.btn-play svg { width: 26px; height: 26px; filter: drop-shadow(0 2px 0 rgba(120,30,10,.45)); }
+#screen-menu .btn-play { animation: breathe 2.4s ease-in-out infinite; }
+@keyframes breathe { 50% { transform: scale(1.035); } }
+#screen-menu .btn-play:active { animation: none; }
+.btn-play.small { font-size: 17px; padding: 6px 14px; width: auto; border-radius: 14px; box-shadow: 0 4px 0 var(--outline), inset 0 -3px 0 var(--edge); }
+.btn-green { --face1: #8ee887; --face2: #3fb950; --edge: #2a8f3a; --txt: var(--white); text-shadow: 0 2px 0 rgba(10,70,20,.4); }
+.btn-soft { --face1: #fff8e6; --face2: #f0d9a8; --edge: #c9a466; }
+.btn-danger { --face1: #fff0ec; --face2: #ffc9bc; --edge: #e6907c; --txt: #b2341c; }
 
 /* ---------- Tahta ---------- */
 #boardWrap {
   flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
   padding: 4px 10px;
 }
-#board { position: relative; }
+#board { position: relative; isolation: isolate; } /* taş z-index'leri pencerelerin üstüne taşmasın */
 .tile {
   position: absolute; width: var(--tile); height: var(--tile);
   background: var(--tile-bg); border-radius: calc(var(--tile) * .2);
@@ -167,23 +201,36 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
 .tile.in-tray.ghost { visibility: hidden; }
 @keyframes land { from { transform: scale(1.12); } }
 
-/* ---------- Jokerler ---------- */
-.jokers { display: flex; justify-content: space-around; padding: 4px 10px 14px; gap: 8px; }
+/* ---------- Jokerler: parlak "kabarcık" butonlar ---------- */
+.jokers { display: flex; justify-content: space-around; padding: 6px 8px 14px; gap: 6px; }
 .joker {
-  position: relative; flex: 1; max-width: 92px; padding: 6px 2px 4px;
-  background: var(--sand); border-radius: 16px; box-shadow: 0 5px 0 var(--tile-edge);
-  display: flex; flex-direction: column; align-items: center; transition: transform .08s;
+  position: relative; flex: 1; max-width: 86px; background: none;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
-.joker:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--tile-edge); }
-.j-icon { font-size: 26px; line-height: 1.1; }
-.j-name { font-size: 12px; font-weight: 700; line-height: 1.1; white-space: nowrap; }
+.joker .j-icon {
+  position: relative; width: 58px; height: 58px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 28px; line-height: 1;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e3f7ff 35%, #8fd3ee 100%);
+  border: 3px solid var(--outline);
+  box-shadow: 0 5px 0 var(--outline), inset 0 -5px 0 rgba(30,120,160,.35);
+  transition: transform .08s, box-shadow .08s;
+}
+.joker .j-icon::after { /* kabarcık parıltısı */
+  content: ""; position: absolute; top: 7px; left: 11px; width: 14px; height: 9px;
+  border-radius: 50%; background: rgba(255,255,255,.9); transform: rotate(-30deg);
+}
+.joker:active .j-icon { transform: translateY(4px); box-shadow: 0 1px 0 var(--outline), inset 0 -3px 0 rgba(30,120,160,.35); }
+.j-name {
+  font-size: 12.5px; font-weight: 800; line-height: 1.1; white-space: nowrap; color: var(--white);
+  text-shadow: 0 1.5px 0 var(--outline), 0 0 4px rgba(0,0,0,.35);
+}
 .j-count {
-  position: absolute; top: -8px; right: -6px; min-width: 24px; height: 24px; padding: 0 6px;
-  border-radius: 12px; background: var(--coral); color: var(--white); font-size: 14px;
-  display: grid; place-items: center; border: 2px solid var(--white);
+  position: absolute; top: -4px; right: 2px; min-width: 24px; height: 24px; padding: 0 6px;
+  border-radius: 12px; background: linear-gradient(#ff8d6e, #ff5a3c); color: var(--white);
+  font-size: 14px; font-weight: 800; display: grid; place-items: center;
+  border: 2.5px solid var(--outline); box-shadow: inset 0 2px 0 rgba(255,255,255,.4);
 }
-.j-count.buy { background: #37b24d; }
-
+.j-count.buy { background: linear-gradient(#7ee07a, #37b24d); }
 
 /* ---------- Modal ---------- */
 .modal-backdrop {
@@ -195,7 +242,8 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
   position: relative; width: 100%; max-width: 360px; background: #fffdf7;
   border-radius: 26px; padding: 26px 22px 22px; text-align: center;
   display: flex; flex-direction: column; align-items: center; gap: 12px;
-  box-shadow: 0 10px 0 rgba(0,0,0,.15); animation: modalIn .22s ease-out;
+  border: 3px solid var(--outline);
+  box-shadow: 0 8px 0 var(--outline), 0 18px 40px rgba(0,0,0,.25); animation: modalIn .22s ease-out;
 }
 @keyframes modalIn { from { transform: scale(.85); opacity: 0; } }
 .modal-card h2 { margin: 0; font-size: 28px; font-weight: 800; line-height: 1.1; }
@@ -205,10 +253,15 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
 .m-emoji.spin { animation: bob 1s infinite; }
 .m-lives { font-size: 20px; font-weight: 700; }
 .m-close, .m-skip {
-  position: absolute; top: 12px; right: 12px; background: #eef3f5; border-radius: 50%;
-  width: 36px; height: 36px; font-size: 16px; color: #5a7581;
+  position: absolute; top: -12px; right: -12px; width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(#ff8d6e, #ff5a3c); color: var(--white); font-size: 18px; font-weight: 800;
+  border: 3px solid var(--outline); box-shadow: 0 3px 0 var(--outline), inset 0 2px 0 rgba(255,255,255,.4);
+  display: grid; place-items: center;
 }
-.m-skip { width: auto; border-radius: 12px; padding: 0 12px; font-size: 14px; }
+.m-skip {
+  top: 12px; right: 12px; width: auto; height: 32px; border-radius: 12px; padding: 0 12px; font-size: 14px;
+  background: #eef3f5; color: #5a7581; border: 2px solid #c9d6dc; box-shadow: none;
+}
 .ad-bar { width: 100%; height: 10px; background: #e3edf1; border-radius: 6px; overflow: hidden; }
 .ad-bar i { display: block; height: 100%; background: var(--coral); animation: adfill 2.5s linear forwards; }
 @keyframes adfill { from { width: 0; } to { width: 100%; } }
@@ -220,9 +273,13 @@ button { font-family: inherit; cursor: pointer; border: 0; color: inherit; }
 .pack-coins { font-size: 20px; font-weight: 800; }
 
 .set-row { width: 100%; display: flex; align-items: center; justify-content: space-between; font-size: 18px; font-weight: 700; }
-.toggle { min-width: 76px; padding: 6px 12px; border-radius: 12px; background: #e3e8ea; font-weight: 700; }
-.toggle.on { background: #37b24d; color: var(--white); }
-.seg { display: flex; background: #e3e8ea; border-radius: 12px; padding: 3px; }
+.toggle {
+  min-width: 80px; padding: 5px 12px; border-radius: 14px; font-weight: 800;
+  background: linear-gradient(#f1f4f5, #d5dde0); border: 2.5px solid var(--outline); color: #5a7581;
+  box-shadow: 0 3px 0 var(--outline);
+}
+.toggle.on { background: linear-gradient(#8ee887, #3fb950); color: var(--white); text-shadow: 0 1px 0 rgba(10,70,20,.4); }
+.seg { display: flex; background: #e3e8ea; border-radius: 14px; padding: 3px; border: 2.5px solid var(--outline); }
 .seg button { padding: 4px 14px; border-radius: 9px; background: none; font-weight: 800; }
 .seg button.on { background: var(--coral); color: var(--white); }
 
