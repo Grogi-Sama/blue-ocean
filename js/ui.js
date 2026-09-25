@@ -32,8 +32,19 @@
   setInterval(refreshHud, 1000);
 
   // ---------- Modal yardımcıları ----------
+  // Çeviri metinlerindeki 🪙 / ❤️ emojilerini oyunun kendi ikonlarıyla değiştir
+  var INLINE_ICONS = {
+    "🪙": '<img class="i-coin" src="assets/ui/coin.png" alt="">',
+    "❤️": '<img class="i-heart" src="assets/ui/heart.png" alt="">'
+  };
+  function withIcons(html) {
+    for (var k in INLINE_ICONS) html = html.split(k).join(INLINE_ICONS[k]);
+    return html;
+  }
+  RT.ui.withIcons = withIcons;
+
   function openModal(html, opts) {
-    card.innerHTML = html;
+    card.innerHTML = withIcons(html);
     card.className = "modal-card" + (opts && opts.cls ? " " + opts.cls : "");
     modal.hidden = false;
     card.querySelectorAll("[data-m]").forEach(function (b) {
@@ -46,7 +57,7 @@
   var handlers = {}; // her modal kendi butonlarını buraya bağlar
 
   RT.ui.toast = function (txt) {
-    toastEl.textContent = txt;
+    toastEl.innerHTML = withIcons(txt);
     toastEl.hidden = false;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { toastEl.hidden = true; }, 1800);
@@ -175,7 +186,7 @@
     }).join("");
     openModal(
       '<button class="m-close" data-m="close">✕</button>' +
-      '<div class="m-emoji">🪙</div><h2>' + RT.t("shopTitle") + "</h2>" + packs +
+      '<img class="m-img" src="assets/ui/coin.png" alt=""><h2>' + RT.t("shopTitle") + "</h2>" + packs +
       '<p class="small">' + RT.t("shopNote") + "</p>"
     );
   }
@@ -216,7 +227,7 @@
       var state = i < claimed ? "done" : (i === claimed && can ? "today" : "locked");
       return '<div class="day ' + state + (i === R.length - 1 ? " big" : "") + '">' +
         "<small>" + RT.t("day", { n: i + 1 }) + "</small>" +
-        '<span class="day-coin">' + (state === "done" ? "✅" : "🪙") + "</span>" +
+        '<span class="day-coin">' + (state === "done" ? "✅" : '<img src="assets/ui/coin.png" alt="">') + "</span>" +
         "<b>" + c + "</b></div>";
     }).join("");
     openModal(
@@ -268,13 +279,13 @@
   function showTutorial(step) {
     step = step || 0;
     var J = function (icon, key, desc) {
-      return '<div class="t-joker"><span class="j-icon">' + icon + "</span><div><b>" + RT.t(key) + "</b><br>" + RT.t(desc) + "</div></div>";
+      return '<div class="t-joker"><span class="j-icon"><img src="assets/jokers/' + icon + '.png" alt=""></span><div><b>' + RT.t(key) + "</b><br>" + RT.t(desc) + "</div></div>";
     };
     var steps = [
-      { e: "🐚🐚🐚", k: "t1" },
-      { e: '<span class="t-tray">' + "🐠🐠🦀⭐⭐🐙<i></i>" + "</span>", k: "t2" },
-      { e: '<span class="t-layers"><b>🐢</b><b class="dim">🦑</b></span>', k: "t3" },
-      { e: "", k: "t4", extra: J("↩️", "jUndo", "t4Undo") + J("🪝", "jRemove", "t4Remove") + J("🌀", "jShuffle", "t4Shuffle") + J("➕", "jExpand", "t4Expand") },
+      { e: '<span class="t-row">' + [1, 2, 3].map(function () { return RT.tileImg("scallop", "t-tile"); }).join("") + "</span>", k: "t1" },
+      { e: '<span class="t-tray">' + ["clownfish", "clownfish", "crab", "starfish", "starfish", "octopus"].map(function (n) { return RT.tileImg(n, "t-mini"); }).join("") + "<i></i></span>", k: "t2" },
+      { e: '<span class="t-layers"><b>' + RT.tileImg("turtle", "t-face") + '</b><b class="dim">' + RT.tileImg("jellyfish", "t-face") + "</b></span>", k: "t3" },
+      { e: "", k: "t4", extra: J("undo", "jUndo", "t4Undo") + J("remove", "jRemove", "t4Remove") + J("shuffle", "jShuffle", "t4Shuffle") + J("expand", "jExpand", "t4Expand") },
       { e: "🏆", k: "t5" }
     ];
     var s = steps[step], last = step === steps.length - 1;

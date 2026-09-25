@@ -19,17 +19,17 @@
     <section id="screen-menu" class="screen active">
       <header class="topbar">
         <div class="pill lives-pill" id="menuLives">
-          <span class="heart">❤️</span><b class="lives-count">5</b>
+          <img class="heart" src="assets/ui/heart.png" alt="" draggable="false"><b class="lives-count">5</b>
           <small class="lives-timer"></small>
         </div>
         <button class="pill coin-pill" data-action="open-shop">
-          <span class="coin">🪙</span><b class="coin-count">0</b><span class="plus">+</span>
+          <img class="coin" src="assets/ui/coin.png" alt="" draggable="false"><b class="coin-count">0</b><span class="plus">+</span>
         </button>
       </header>
 
       <div class="menu-center">
         <div class="logo">
-          <div class="logo-emoji">🐚🐠⭐</div>
+          <div class="logo-icons"><img src="assets/tiles/clownfish.png" alt=""><img src="assets/tiles/pearl.png" alt=""><img src="assets/tiles/starfish.png" alt=""></div>
           <h1 data-i18n="gameTitle">Mercan Üçlüsü</h1>
           <p class="subtitle" data-i18n="gameSubtitle">Üçünü bul, resifi temizle!</p>
         </div>
@@ -51,7 +51,7 @@
       <header class="topbar">
         <button class="icon-btn" data-action="pause" aria-label="Menü"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
         <div class="level-title"><span data-i18n="level">Seviye</span> <b id="gameLevel">1</b></div>
-        <div class="pill lives-pill small"><span class="heart">❤️</span><b class="lives-count">5</b></div>
+        <div class="pill lives-pill small"><img class="heart" src="assets/ui/heart.png" alt="" draggable="false"><b class="lives-count">5</b></div>
       </header>
 
       <div id="boardWrap"><div id="board"></div></div>
@@ -62,10 +62,10 @@
       <div id="tray" class="tray"></div>
 
       <div class="jokers">
-        <button class="joker" data-joker="undo"><span class="j-icon">↩️</span><span class="j-name" data-i18n="jUndo">Geri Al</span><b class="j-count"></b></button>
-        <button class="joker" data-joker="remove"><span class="j-icon">🪝</span><span class="j-name" data-i18n="jRemove">Taşı Kaldır</span><b class="j-count"></b></button>
-        <button class="joker" data-joker="shuffle"><span class="j-icon">🌀</span><span class="j-name" data-i18n="jShuffle">Karıştır</span><b class="j-count"></b></button>
-        <button class="joker" data-joker="expand"><span class="j-icon">➕</span><span class="j-name" data-i18n="jExpand">Genişlet</span><b class="j-count"></b></button>
+        <button class="joker" data-joker="undo"><span class="j-icon"><img src="assets/jokers/undo.png" alt="" draggable="false"></span><span class="j-name" data-i18n="jUndo">Geri Al</span><b class="j-count"></b></button>
+        <button class="joker" data-joker="remove"><span class="j-icon"><img src="assets/jokers/remove.png" alt="" draggable="false"></span><span class="j-name" data-i18n="jRemove">Taşı Kaldır</span><b class="j-count"></b></button>
+        <button class="joker" data-joker="shuffle"><span class="j-icon"><img src="assets/jokers/shuffle.png" alt="" draggable="false"></span><span class="j-name" data-i18n="jShuffle">Karıştır</span><b class="j-count"></b></button>
+        <button class="joker" data-joker="expand"><span class="j-icon"><img src="assets/jokers/expand.png" alt="" draggable="false"></span><span class="j-name" data-i18n="jExpand">Genişlet</span><b class="j-count"></b></button>
       </div>
     </section>
 

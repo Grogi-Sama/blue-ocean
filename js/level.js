@@ -1,11 +1,20 @@
 // Seviye üretici. Tüm konumlar "taş birimi" cinsinden: 1 birim = 1 taş genişliği.
 // Her seviye her açılışta rastgele yeniden dizilir, ama zorluk seviye numarasıyla artar.
 (function () {
-  // Geçici görseller: emoji. Assetler gelince burası resim yollarıyla değişecek.
+  // Taş türleri = assets/tiles/<ad>.png dosyaları
   RT.TILE_TYPES = [
-    "🐚", "🐠", "⭐", "🦀", "🐙", "🐡", "🦑", "🐢",
-    "🐬", "🦞", "🪼", "🐳", "🦈", "💎", "⚓", "🦭"
+    "crab", "clownfish", "starfish", "pufferfish", "turtle", "seahorse", "dolphin", "whale",
+    "octopus", "jellyfish", "pearl", "scallop", "shark", "chest", "anchor", "seal"
   ];
+  RT.tileSrc = function (type) { return "assets/tiles/" + type + ".png"; };
+  RT.tileImg = function (type, cls) {
+    return '<img class="' + (cls || "face") + '" src="' + RT.tileSrc(type) + '" alt="" draggable="false">';
+  };
+  // Tüm görselleri baştan yükle (ilk seviyede taşlar "sonradan belirmesin")
+  RT.TILE_TYPES.map(RT.tileSrc).concat([
+    "assets/ui/heart.png", "assets/ui/coin.png",
+    "assets/jokers/undo.png", "assets/jokers/remove.png", "assets/jokers/shuffle.png", "assets/jokers/expand.png"
+  ]).forEach(function (src) { new Image().src = src; });
 
   var GRID_COLS = 7, GRID_ROWS = 7;
   var STACK_STEP = 0.12; // kenar destelerinde taşlar arası kayma

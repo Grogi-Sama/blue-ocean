@@ -51,7 +51,7 @@
   }
   window.addEventListener("resize", function () { layout(); if (S) { renderBoard(); renderTray(); renderBank(); } });
 
-  function tileHtml(type) { return '<span class="face">' + type + "</span>"; }
+  function tileHtml(type) { return RT.tileImg(type); }
 
   // ---------- Tahta ----------
   function renderBoard() {
