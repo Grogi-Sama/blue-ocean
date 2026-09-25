@@ -35,6 +35,7 @@
       },
       level: 1,
       tutorialSeen: false,
+      discovered: 16,                        // "Yeni canlı" penceresinde gösterilmiş taş sayısı
       daily: { claimed: 0, lastDate: null }, // giriş takvimi: kaç gün alındı, en son hangi tarihte
       settings: { music: true, sound: true, lang: null }
     };

@@ -1,20 +1,45 @@
 // Seviye üretici. Tüm konumlar "taş birimi" cinsinden: 1 birim = 1 taş genişliği.
 // Her seviye her açılışta rastgele yeniden dizilir, ama zorluk seviye numarasıyla artar.
 (function () {
-  // Taş türleri = assets/tiles/<ad>.png dosyaları
+  // Taş türleri = assets/tiles/<ad>.png dosyaları. İlk 16'sı baştan açık;
+  // gerisi bu SIRAYLA, seviye ilerledikçe ikişer ikişer açılır (bkz. RT.unlockedCount).
   RT.TILE_TYPES = [
     "crab", "clownfish", "starfish", "pufferfish", "turtle", "seahorse", "dolphin", "whale",
-    "octopus", "jellyfish", "pearl", "scallop", "shark", "chest", "anchor", "seal"
+    "octopus", "jellyfish", "pearl", "scallop", "shark", "chest", "anchor", "seal",
+    // 2. paket
+    "urchin", "narwhal", "manta", "coral", "kelp", "bluetang", "angler", "otter",
+    "penguin", "wheel", "bottle", "helmet", "submarine", "nautilus", "swordfish", "trident",
+    // 3. paket
+    "lobster", "lighthouse", "lifebuoy", "seagull", "seadragon", "eel", "squid", "shrimp",
+    "sanddollar", "compass", "sailboat", "manatee", "mussel", "orca", "mermaidtail", "map"
   ];
+
+  // ---- Yeni taş kilidi ----
+  // Seviye 15'ten başlayarak her 8 seviyede 2 yeni taş: 15, 23, 31 … son ikili seviye 135'te.
+  var BASE_TILES = 16, UNLOCK_START = 15, UNLOCK_EVERY = 8, UNLOCK_STEP = 2;
+  RT.MAX_TYPES_PER_LEVEL = 18; // bir seviyede en fazla bu kadar farklı taş (fazlası çok seyreltir)
+  RT.unlockedCount = function (n) {
+    if (n < UNLOCK_START) return BASE_TILES;
+    var steps = Math.floor((n - UNLOCK_START) / UNLOCK_EVERY) + 1;
+    return Math.min(RT.TILE_TYPES.length, BASE_TILES + steps * UNLOCK_STEP);
+  };
+  // Bu seviyede ilk kez açılan taşlar (yoksa boş dizi)
+  RT.newTilesAt = function (n) {
+    var now = RT.unlockedCount(n), before = RT.unlockedCount(n - 1);
+    return RT.TILE_TYPES.slice(before, now);
+  };
   RT.tileSrc = function (type) { return "assets/tiles/" + type + ".png"; };
   RT.tileImg = function (type, cls) {
     return '<img class="' + (cls || "face") + '" src="' + RT.tileSrc(type) + '" alt="" draggable="false">';
   };
-  // Tüm görselleri baştan yükle (ilk seviyede taşlar "sonradan belirmesin")
-  RT.TILE_TYPES.map(RT.tileSrc).concat([
-    "assets/ui/heart.png", "assets/ui/coin.png",
-    "assets/jokers/undo.png", "assets/jokers/remove.png", "assets/jokers/shuffle.png", "assets/jokers/expand.png"
-  ]).forEach(function (src) { new Image().src = src; });
+  // Açılmış taşların ve arayüz görsellerinin önceden yüklenmesi (ilk seviyede
+  // taşlar "sonradan belirmesin"). unlockedCount aşağıda tanımlı, bu yüzden fonksiyon.
+  function preload() {
+    RT.TILE_TYPES.slice(0, RT.unlockedCount(RT.save.level + 8)).map(RT.tileSrc).concat([
+      "assets/ui/heart.png", "assets/ui/coin.png",
+      "assets/jokers/undo.png", "assets/jokers/remove.png", "assets/jokers/shuffle.png", "assets/jokers/expand.png"
+    ]).forEach(function (src) { new Image().src = src; });
+  }
 
   var GRID_COLS = 7, GRID_ROWS = 7;
   var STACK_STEP = 0.12; // kenar destelerinde taşlar arası kayma
@@ -34,7 +59,7 @@
     else if (n === 3) cfg = { types: 5, main: 42, layers: 4, stack: 0 };
     else {
       cfg = {
-        types: Math.min(6 + Math.floor((n - 4) / 3), RT.TILE_TYPES.length),
+        types: Math.min(6 + Math.floor((n - 4) / 3), RT.MAX_TYPES_PER_LEVEL),
         main: Math.min(48 + (n - 4) * 3, 120),
         layers: Math.min(4 + Math.floor((n - 4) / 4), 9),
         stack: Math.min(4 + Math.floor((n - 4) / 3), 12) // her iki deste için
@@ -122,7 +147,7 @@
       }
     }
 
-    assignTypes(tiles, cfg.types);
+    assignTypes(tiles, cfg.types, n);
 
     // Tahtayı yalnızca taşların kapladığı alana kırp (böylece ortalanır ve taşlar büyür)
     var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -138,8 +163,14 @@
   // Tahtayı sanal olarak üstten sökeriz; açıkta olan taşlardan rastgele 3'er tane
   // alıp aynı türü veririz. Böylece bu söküm sırası her zaman geçerli bir çözümdür
   // (oyuncunun onu bulması gerekir — tahta yine de zorlayıcı).
-  function assignTypes(tiles, typeCount) {
-    var types = shuffle(RT.TILE_TYPES.slice()).slice(0, typeCount);
+  function assignTypes(tiles, typeCount, level) {
+    // Yalnızca açılmış taşlardan seç; bu seviyede yeni açılanlar mutlaka yer alsın
+    var fresh = RT.newTilesAt(level);
+    var others = shuffle(RT.TILE_TYPES.slice(0, RT.unlockedCount(level)).filter(function (t) {
+      return fresh.indexOf(t) === -1;
+    }));
+    var types = fresh.concat(others).slice(0, typeCount);
+    typeCount = types.length;
     var triples = tiles.length / 3, bag = [];
     for (var i = 0; i < triples; i++) bag.push(types[i % typeCount]);
     shuffle(bag);
@@ -154,4 +185,6 @@
       }
     }
   }
+
+  preload();
 })();

@@ -67,9 +67,29 @@
   function play() {
     RT.tickLives();
     if (RT.save.lives <= 0) { showNoLives(); return; }
+    var fresh = RT.newTilesAt(RT.save.level);
+    if (fresh.length && RT.unlockedCount(RT.save.level) > RT.save.discovered) {
+      showDiscovery(fresh);
+      return;
+    }
     closeModal();
     show("game");
     RT.game.start(RT.save.level);
+  }
+
+  // "Yeni canlı keşfettin!" — yeni açılan taşları tanıtır, sonra seviyeyi başlatır
+  function showDiscovery(types) {
+    RT.save.discovered = RT.unlockedCount(RT.save.level);
+    RT.persist();
+    handlers.go = play;
+    RT.sfx("win");
+    openModal(
+      '<div class="discover">' + types.map(function (t) { return '<span class="d-tile">' + RT.tileImg(t, "d-img") + "</span>"; }).join("") + "</div>" +
+      "<h2>" + RT.t("discoverTitle") + "</h2>" +
+      "<p>" + RT.t("discoverText") + "</p>" +
+      '<button class="btn btn-green" data-m="go">' + RT.t("discoverGo") + "</button>",
+      { cls: "discovery" }
+    );
   }
 
   // ---------- Kazandın / Kaybettin ----------

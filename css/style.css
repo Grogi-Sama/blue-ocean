@@ -357,3 +357,15 @@ img { -webkit-user-drag: none; user-select: none; }
 .ad-tag { position: absolute; top: 0; left: 0; font-size: 11px; background: var(--gold); color: var(--ink); padding: 1px 6px; border-radius: 4px; font-weight: 800; }
 .ad-skip { opacity: .55; }
 .ad-skip.ready { opacity: 1; }
+
+/* ---------- Yeni canlı keşfi ---------- */
+.discover { display: flex; gap: 14px; justify-content: center; }
+.d-tile {
+  width: 84px; height: 84px; display: grid; place-items: center;
+  background: var(--tile-bg); border: 2px solid #c9b388; border-radius: 18px;
+  box-shadow: 0 6px 0 var(--tile-edge), 0 0 0 6px rgba(255,201,60,.35);
+  animation: discoverIn .5s cubic-bezier(.3,1.6,.5,1) both;
+}
+.d-tile:nth-child(2) { animation-delay: .12s; }
+.d-img { width: 82%; height: 82%; object-fit: contain; }
+@keyframes discoverIn { from { transform: scale(0) rotate(-20deg); } }
