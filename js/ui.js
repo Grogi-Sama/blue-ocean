@@ -131,14 +131,26 @@
 
   // ---------- Sepet doldu: reklam izle, devam et ----------
   RT.ui.showContinue = function (onContinue, onGiveUp) {
+    var price = RT.CONFIG.CONTINUE_PRICE;
     handlers.continueAd = function () { watchAd(function () { closeModal(); onContinue(); }); };
+    handlers.continueCoins = function () {
+      if (!RT.spendCoins(price)) {
+        RT.ui.toast(RT.t("notEnoughCoins"));
+        // Mağaza kapanınca bu pencereye geri dön (oyun yarıda kalmasın)
+        showShop(function () { RT.ui.showContinue(onContinue, onGiveUp); });
+        return;
+      }
+      refreshHud(); closeModal(); onContinue();
+    };
     handlers.giveUp = function () { closeModal(); onGiveUp(); };
     openModal(
       '<div class="m-emoji">🫧</div>' +
       "<h2>" + RT.t("continueTitle") + "</h2>" +
       "<p>" + RT.t("continueText") + "</p>" +
       '<button class="btn btn-blue" data-m="continueAd">📺 ' + RT.t("continueAd") + "</button>" +
-      '<button class="btn btn-soft" data-m="giveUp">' + RT.t("giveUp") + "</button>"
+      '<button class="btn btn-soft" data-m="continueCoins">' + RT.t("continueCoins", { c: price }) + "</button>" +
+      '<button class="btn btn-danger" data-m="giveUp">' + RT.t("giveUp") + "</button>" +
+      '<p class="small">' + RT.t("yourCoins") + " 🪙 " + RT.save.coins + "</p>"
     );
   };
 
@@ -167,8 +179,12 @@
       watchAd(function () { RT.addLives(1); refreshHud(); showLives(); RT.ui.toast(RT.t("adDone")); });
     };
     handlers.refill = function () {
-      if (!RT.spendCoins(RT.refillPrice())) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(); return; }
+      if (!RT.spendCoins(RT.refillPrice())) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(showLives); return; }
       RT.addLives(RT.CONFIG.LIVES_MAX); refreshHud(); showLives();
+    };
+    handlers.oneLife = function () {
+      if (!RT.spendCoins(RT.CONFIG.LIFE_PRICE)) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(showLives); return; }
+      RT.addLives(1); refreshHud(); showLives();
     };
     var hearts = "";
     for (var i = 0; i < RT.CONFIG.LIVES_MAX; i++) {
@@ -182,6 +198,8 @@
         ? "<p>" + RT.t("livesFull") + "</p>"
         : "<p>" + RT.t("noLivesText", { t: '<b id="noLivesTimer">' + RT.formatTime(RT.msToNextLife()) + "</b>" }) + "</p>" +
           '<button class="btn btn-blue" data-m="ad">📺 ' + RT.t("watchAd") + "</button>" +
+          (RT.CONFIG.LIVES_MAX - s.lives >= 2
+            ? '<button class="btn btn-soft" data-m="oneLife">' + RT.t("oneLifeCoins", { c: RT.CONFIG.LIFE_PRICE }) + "</button>" : "") +
           '<button class="btn btn-soft" data-m="refill">' + RT.t("refillCoins", { c: price }) + "</button>")
     );
   }
@@ -215,23 +233,55 @@
   }
 
   // ---------- Mağaza (test) ----------
-  function showShop() {
-    handlers.close = closeModal;
+  // Paket görselleri gelene kadar coin ikonu kullanılır (bkz. packIcon)
+  var PACK_ICONS = {};
+  function packIcon(id) {
+    return '<img class="pack-img" src="' + (PACK_ICONS[id] || "assets/ui/coin.png") + '" alt="">';
+  }
+
+  // onClose: mağaza kapanınca dönülecek pencere (yoksa sadece kapanır)
+  function showShop(onClose) {
+    handlers.close = onClose || closeModal;
     handlers.buy = function (b) {
       // GERÇEK ÖDEME YOK. Mağaza entegrasyonunda burası uygulama içi satın
       // alma (Google Play / App Store) onayından SONRA çalışacak.
-      var n = +b.dataset.coins;
-      RT.save.coins += n; RT.persist(); refreshHud();
-      RT.ui.toast(RT.t("bought", { n: n }));
+      var p = RT.CONFIG.COIN_PACKS.filter(function (x) { return x.id === b.dataset.id; })[0];
+      RT.save.coins += p.coins; RT.persist(); refreshHud();
+      RT.ui.toast(RT.t("bought", { n: p.coins }));
+      showShop(onClose);
     };
-    var packs = RT.CONFIG.COIN_PACKS.map(function (p) {
-      return '<div class="pack"><span class="pack-coins">🪙 ' + p.coins + '</span>' +
-        '<button class="btn btn-play small" data-m="buy" data-coins="' + p.coins + '">' + p.price + "</button></div>";
+    handlers.buyStarter = function () {
+      var sp = RT.CONFIG.STARTER_PACK;
+      if (RT.save.starterBought) return;
+      RT.save.coins += sp.coins;
+      for (var j in RT.save.jokers) RT.save.jokers[j] += sp.jokers;
+      RT.save.starterBought = true;
+      RT.persist(); refreshHud(); if (RT.game.renderJokers) RT.game.renderJokers();
+      RT.ui.toast(RT.t("starterBought"));
+      showShop(onClose);
+    };
+    var sp = RT.CONFIG.STARTER_PACK;
+    var starter = RT.save.starterBought ? "" :
+      '<div class="starter">' + packIcon("starter") +
+      '<div class="starter-info"><b>' + RT.t("starterTitle") + "</b>" +
+      "<span>🪙 " + sp.coins + " + " + RT.t("starterJokers", { n: sp.jokers }) + "</span>" +
+      "<small>" + RT.t("starterOnce") + "</small></div>" +
+      '<button class="btn btn-green small" data-m="buyStarter">' + RT.priceLabel(sp) + "</button></div>";
+    var packs = RT.CONFIG.COIN_PACKS.map(function (p, i) {
+      return '<div class="pack-card' + (p.badge ? " has-badge" : "") + '">' +
+        (p.badge ? '<span class="pack-badge ' + p.badge + '">' + RT.t(p.badge === "best" ? "badgeBest" : "badgePopular") + "</span>" : "") +
+        (p.bonus ? '<span class="pack-bonus">+%' + p.bonus + "</span>" : "") +
+        packIcon(p.id) +
+        '<span class="pack-name">' + RT.t("pack" + (i + 1)) + "</span>" +
+        '<span class="pack-coins">' + p.coins.toLocaleString(RT.lang === "tr" ? "tr-TR" : "en-US") + " 🪙</span>" +
+        '<button class="btn btn-play small" data-m="buy" data-id="' + p.id + '">' + RT.priceLabel(p) + "</button></div>";
     }).join("");
     openModal(
       '<button class="m-close" data-m="close">✕</button>' +
-      '<img class="m-img" src="assets/ui/coin.png" alt=""><h2>' + RT.t("shopTitle") + "</h2>" + packs +
-      '<p class="small">' + RT.t("shopNote") + "</p>"
+      "<h2>" + RT.t("shopTitle") + "</h2>" +
+      '<div class="shop-scroll">' + starter + '<div class="pack-grid">' + packs + "</div></div>" +
+      '<p class="small">' + RT.t("shopNote") + "</p>",
+      { cls: "shop" }
     );
   }
 
@@ -241,7 +291,7 @@
     handlers.close = closeModal;
     function grant() { RT.save.jokers[name]++; RT.persist(); closeModal(); refreshHud(); RT.game.renderJokers(); }
     handlers.buyJoker = function () {
-      if (!RT.spendCoins(RT.CONFIG.JOKER_PRICE)) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(); return; }
+      if (!RT.spendCoins(RT.CONFIG.JOKER_PRICE)) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(function () { RT.ui.offerJoker(name); }); return; }
       grant();
     };
     handlers.adJoker = function () { watchAd(function () { grant(); RT.ui.toast(RT.t("jokerAdDone")); }); };
