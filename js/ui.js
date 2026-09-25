@@ -158,14 +158,13 @@
 
   // ---------- Canlar penceresi ----------
   // Can bittiğinde ve can göstergesine dokunulduğunda açılır: sıradaki canın
-  // süresi, reklamla +1 can (günlük sınırlı) ve eksik canları coinle doldurma.
+  // süresi, reklamla +1 can (sınırsız) ve eksik canları coinle doldurma.
   function showLives() {
     RT.tickLives();
-    var s = RT.save, full = s.lives >= RT.CONFIG.LIVES_MAX, price = RT.refillPrice(), adLeft = RT.adLivesLeft();
+    var s = RT.save, full = s.lives >= RT.CONFIG.LIVES_MAX, price = RT.refillPrice();
     handlers.close = closeModal;
     handlers.ad = function () {
-      if (RT.adLivesLeft() <= 0) return;
-      watchAd(function () { RT.useAdLife(); refreshHud(); showLives(); RT.ui.toast(RT.t("adDone")); });
+      watchAd(function () { RT.addLives(1); refreshHud(); showLives(); RT.ui.toast(RT.t("adDone")); });
     };
     handlers.refill = function () {
       if (!RT.spendCoins(RT.refillPrice())) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(); return; }
@@ -182,8 +181,7 @@
       (full
         ? "<p>" + RT.t("livesFull") + "</p>"
         : "<p>" + RT.t("noLivesText", { t: '<b id="noLivesTimer">' + RT.formatTime(RT.msToNextLife()) + "</b>" }) + "</p>" +
-          '<button class="btn btn-blue" data-m="ad"' + (adLeft ? "" : " disabled") + ">📺 " + RT.t("watchAd") + "</button>" +
-          '<p class="small">' + (adLeft ? RT.t("adLivesLeft", { n: adLeft }) : RT.t("adLivesNone")) + "</p>" +
+          '<button class="btn btn-blue" data-m="ad">📺 ' + RT.t("watchAd") + "</button>" +
           '<button class="btn btn-soft" data-m="refill">' + RT.t("refillCoins", { c: price }) + "</button>")
     );
   }
