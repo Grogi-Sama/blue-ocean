@@ -56,7 +56,11 @@
     var d = null;
     try { d = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
     var def = defaults();
-    if (!d) return def;
+    // Kayıt yoksa ya da bozulmuşsa (nesne değilse) temiz kayıtla başla
+    if (!d || typeof d !== "object" || Array.isArray(d)) return def;
+    if (!d.jokers || typeof d.jokers !== "object") d.jokers = def.jokers;
+    if (!d.settings || typeof d.settings !== "object") d.settings = def.settings;
+    if (!d.daily || typeof d.daily !== "object") d.daily = def.daily;
     // Yeni alanlar eklendiğinde eski kayıtlar bozulmasın
     for (var k in def) if (d[k] === undefined) d[k] = def[k];
     for (var j in def.jokers) if (d.jokers[j] === undefined) d.jokers[j] = def.jokers[j];
@@ -80,6 +84,7 @@
   RT.tickLives = function () {
     var s = RT.save, C = RT.CONFIG;
     if (s.lives >= C.LIVES_MAX) { s.lastRegen = Date.now(); return; }
+    if (s.lastRegen > Date.now()) s.lastRegen = Date.now(); // saat geri alınmış
     var gained = Math.floor((Date.now() - s.lastRegen) / C.LIFE_REGEN_MS);
     if (gained > 0) {
       s.lives = Math.min(C.LIVES_MAX, s.lives + gained);

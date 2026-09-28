@@ -76,11 +76,11 @@
 
   var handlers = {}; // her modal kendi butonlarını buraya bağlar
 
-  RT.ui.toast = function (txt) {
+  RT.ui.toast = function (txt, ms) {
     toastEl.innerHTML = withIcons(txt);
     toastEl.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toastEl.hidden = true; }, 1800);
+    toastTimer = setTimeout(function () { toastEl.hidden = true; }, ms || 1800);
   };
 
   // ---------- Oyun başlatma ----------
@@ -453,8 +453,6 @@
     b.addEventListener("click", function () { RT.sfx("click"); ACTIONS[b.dataset.action](); });
   });
 
-  // İlk dokunuşta sesi aç (tarayıcı kuralı)
-  document.addEventListener("pointerdown", RT.unlockAudio, { once: false, passive: true });
 
   // ---------- Dekoratif kabarcıklar ----------
   (function bubbles() {

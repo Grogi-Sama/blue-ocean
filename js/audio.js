@@ -4,6 +4,7 @@
 (function () {
   var ctx = null, master = null, musicGain = null, sfxGain = null;
   var musicTimer = null;
+  var musicVoices = []; // çalan müzik notaları (kapatınca hepsi anında durdurulur)
 
   function ensure() {
     if (ctx) return true;
@@ -13,6 +14,8 @@
     master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
     sfxGain = ctx.createGain(); sfxGain.gain.value = sfxLevel(); sfxGain.connect(master);
     musicGain = ctx.createGain(); musicGain.gain.value = 0; musicGain.connect(master);
+    // Motor açılınca/kapanınca (iPhone'da telefon araması, kilit ekranı vb.) müziği güncelle
+    ctx.onstatechange = function () { RT.updateMusic(); };
     return true;
   }
 
@@ -22,12 +25,27 @@
 
   RT.setSfxVolume = function () { if (sfxGain) sfxGain.gain.value = sfxLevel(); };
 
-  // Tarayıcılar sesi ancak ilk dokunuştan sonra açmaya izin veriyor
+  // Tarayıcılar sesi ancak kullanıcı dokunduktan sonra açmaya izin veriyor.
+  // iPhone (Safari) bunu parmak ekrana DEĞDİĞİNDE (pointerdown) değil, dokunma
+  // TAMAMLANINCA (touchend / click) kabul ediyor; bu yüzden o olaylarda çağrılır.
   RT.unlockAudio = function () {
     if (!ensure()) return;
-    if (ctx.state === "suspended") ctx.resume();
-    RT.updateMusic();
+    if (ctx.state === "running") { RT.updateMusic(); return; }
+    // "suspended" ya da iPhone'a özgü "interrupted": yeniden başlat; açılınca müzik
+    // onstatechange / then ile başlar (açılmadan müziği başlatmaya çalışmak işe yaramaz)
+    try {
+      var p = ctx.resume();
+      if (p && p.then) p.then(RT.updateMusic, function () {});
+    } catch (e) {}
+    // Eski iOS sürümleri için: dokunma anında kısa bir sessiz ses çalmak motoru açar
+    try {
+      var b = ctx.createBuffer(1, 1, 22050), src = ctx.createBufferSource();
+      src.buffer = b; src.connect(ctx.destination); src.start(0);
+    } catch (e) {}
   };
+  ["touchend", "pointerup", "click", "keydown"].forEach(function (ev) {
+    document.addEventListener(ev, RT.unlockAudio, { capture: true, passive: true });
+  });
 
   function tone(freq, start, dur, opts) {
     opts = opts || {};
@@ -41,6 +59,10 @@
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     o.connect(g); g.connect(opts.dest || sfxGain);
     o.start(start); o.stop(start + dur + 0.05);
+    if (opts.dest === musicGain) {
+      musicVoices.push(o);
+      o.onended = function () { var i = musicVoices.indexOf(o); if (i > -1) musicVoices.splice(i, 1); };
+    }
   }
 
   var SFX = {
@@ -62,7 +84,8 @@
   };
 
   RT.sfx = function (name) {
-    if (!RT.save.settings.sfxVol || !ensure() || ctx.state !== "running") return;
+    if (!RT.save.settings.sfxVol || !ensure()) return;
+    if (ctx.state !== "running") { RT.unlockAudio(); return; }
     if (SFX[name]) SFX[name](ctx.currentTime);
   };
 
@@ -89,23 +112,42 @@
     }
   }
 
+  // Müziği TAMAMEN durdur: zamanlayıcıyı kapat ve çalan/sıradaki tüm notaları kes.
+  // (Sadece ses seviyesini 0'a indirmek bazı Android tarayıcılarında uygulanmıyordu.)
+  function stopMusicNow() {
+    if (musicTimer) { clearInterval(musicTimer); musicTimer = null; }
+    musicVoices.slice().forEach(function (o) { try { o.stop(); } catch (e) {} });
+    musicVoices = [];
+  }
+
   RT.updateMusic = function () {
     if (!ctx) return;
     var on = RT.save.settings.musicVol > 0 && ctx.state === "running";
-    musicGain.gain.cancelScheduledValues(ctx.currentTime);
-    musicGain.gain.setValueAtTime(musicGain.gain.value, ctx.currentTime);
-    musicGain.gain.linearRampToValueAtTime(on ? musicLevel() : 0, ctx.currentTime + 0.4);
-    if (on && !musicTimer) {
+    var now = ctx.currentTime;
+    musicGain.gain.cancelScheduledValues(now);
+    if (!on) {
+      musicGain.gain.setValueAtTime(0, now);
+      stopMusicNow();
+      return;
+    }
+    // Seviyeye yumuşakça geç (çubuk sürüklenirken de pürüzsüz)
+    musicGain.gain.setTargetAtTime(musicLevel(), now, 0.12);
+    if (!musicTimer) {
       playChord();
       musicTimer = setInterval(playChord, 7000);
-    } else if (!on && musicTimer) {
-      clearInterval(musicTimer); musicTimer = null;
     }
   };
 
-  // Uygulama arka plana geçince müziği durdur (telefonda önemli)
+  // Test/teşhis için: ses motorunun anlık durumu
+  RT.audioState = function () {
+    return { state: ctx ? ctx.state : "none", musicPlaying: !!musicTimer, musicVoices: musicVoices.length };
+  };
+
+  // Uygulama arka plana geçince sesi durdur (telefonda önemli). Geri gelince
+  // yeniden açmayı dene; iPhone izin vermezse bir sonraki dokunuşta açılır.
   document.addEventListener("visibilitychange", function () {
     if (!ctx) return;
-    if (document.hidden) ctx.suspend(); else { ctx.resume().then(RT.updateMusic); }
+    if (document.hidden) { stopMusicNow(); ctx.suspend(); }
+    else { try { ctx.resume().then(RT.updateMusic, function () {}); } catch (e) {} }
   });
 })();

@@ -104,7 +104,10 @@
 
   function renderBank() {
     bankEl.innerHTML = "";
+    var had = bankEl.classList.contains("has-items");
     bankEl.classList.toggle("has-items", S.bank.length > 0);
+    // Alan açılıp kapanınca tahtanın sığacağı yükseklik değişir
+    if (had !== S.bank.length > 0) setTimeout(function () { if (S) { layout(); renderBoard(); } }, 220);
     S.bank.forEach(function (t) {
       var el = document.createElement("div");
       el.className = "tile in-bank";
@@ -124,6 +127,7 @@
   function pickTile(t, el) {
     if (S.over) return;
     if (S.tray.length >= S.trayMax) return;
+    if (S.tiles.indexOf(t) === -1) return;
     RT.sfx("tap");
 
     var from = el.getBoundingClientRect();
@@ -229,7 +233,7 @@
     S.over = false;
     S.trayFull = false;
     S.rescue = true;
-    RT.ui.toast(RT.t("rescueHint"));
+    RT.ui.toast(RT.t("rescueHint"), 3500);
   }
 
   // Kurtarma sırasında yer açılamadıysa (joker başarısız / satın alınmadı) pencereyi yeniden göster
@@ -304,6 +308,7 @@
       return true;
     },
     shuffle: function () {
+      if (S.tiles.length < 2) { toast(RT.t("nothingToShuffle")); return false; }
       var types = RT.shuffle(S.tiles.map(function (t) { return t.type; }));
       S.tiles.forEach(function (t, i) { t.type = types[i]; });
       boardEl.classList.remove("shake"); void boardEl.offsetWidth; boardEl.classList.add("shake");
@@ -321,7 +326,7 @@
 
   RT.game.useJoker = function (name) {
     if (!S || S.over) return;
-    if (S.rescue && name === "shuffle") { toast(RT.t("rescueHint")); return; }
+    if (S.rescue && name === "shuffle") { RT.sfx("error"); RT.ui.toast(RT.t("rescueHint"), 3500); return; }
     if (RT.save.jokers[name] <= 0) {
       // Kurtarma sırasında satın almadan kapatılırsa "Sepet Doldu" penceresi geri gelir
       RT.ui.offerJoker(name, S.rescue ? RT.game.recheck : null);
