@@ -26,6 +26,7 @@
       pickSeq: 0,          // sepete atılma sırası (devam ederken en son atılanları bulmak için)
       history: [],         // Geri Al için: sepete atılan son taşlar
       flying: 0,           // uçuş animasyonu süren taş sayısı
+      rescue: false,       // sepet doldu, oyuncu joker kullanarak yer açmaya çalışıyor
       over: false
     };
     document.getElementById("gameLevel").textContent = level;
@@ -36,7 +37,17 @@
     RT.game.renderJokers();
   };
 
-  RT.game.isActive = function () { return S && !S.over; };
+  RT.game.isActive = function () { return !!S && !S.over; };
+  // Oyun bitmiş (kazanıldı/kaybedildi/çıkıldı) ama ekranda hâlâ duruyor mu?
+  // (Kısa süre sonra açılacak bir pencere bekleniyorsa bitmiş sayılmaz.)
+  RT.game.isFinished = function () { return !!S && S.over && !S.pending; };
+
+  // Seviyeden çıkış: süren bir oyundan (ya da sepet dolup kayıp kesinleşmek üzereyken)
+  // çıkılırsa 1 can düşer; zaten kaybedilmiş/kazanılmış oyundan çıkmak can yakmaz.
+  RT.game.quit = function () {
+    if (S && !S.lost && (!S.over || S.trayFull)) RT.spendLife();
+    if (S) { S.over = true; S.quit = true; }
+  };
 
   // ---------- Yerleşim ----------
   function layout() {
@@ -126,7 +137,9 @@
     renderBoard();
     renderTray();
     var target = trayEl.children[idx].getBoundingClientRect();
+    var st = S;
     fly(t.type, from, target, function () {
+      if (st !== S) return; // seviye değişti; eski animasyon yeni seviyeyi etkilemesin
       trayTile.ghost = false;
       S.flying--;
       resolveMatches();
@@ -174,23 +187,63 @@
 
   function checkEnd() {
     if (S.over || S.flying > 0) return;
+    var st = S;
+    // Gecikmeli pencereler yalnızca oyuncu hâlâ bu seviyedeyse açılır
+    // (aradaki 0,35 sn'de ☰ → Seviyeden Çık'a basılmış olabilir)
+    function later(fn) {
+      st.pending = true;
+      setTimeout(function () { st.pending = false; if (st === S && !st.quit) fn(); }, 350);
+    }
     if (S.tiles.length === 0 && S.tray.length === 0 && S.bank.length === 0) {
       S.over = true;
       RT.save.level = S.level + 1;
       RT.persist();
-      setTimeout(function () { RT.sfx("win"); RT.ui.showWin(S.level); }, 350);
+      later(function () { RT.sfx("win"); RT.ui.showWin(st.level); });
     } else if (S.tray.length >= S.trayMax) {
       S.over = true;
-      if (!S.continued) {
-        // Seviye başına 1 kez: reklam izlerse devam, izlemezse kaybeder
-        setTimeout(function () { RT.sfx("error"); RT.ui.showContinue(continueLevel, loseLevel); }, 350);
+      S.trayFull = true;   // kayıp bekliyor (devam/joker ile kurtarılabilir)
+      S.rescue = false;
+      var canContinue = !S.continued, canRescue = rescuePossible();
+      if (canContinue || canRescue) {
+        // Devam (seviye başına 1 kez) ve/veya elindeki jokerle yer açma seçeneği
+        later(function () {
+          RT.sfx("error");
+          RT.ui.showContinue(canContinue ? continueLevel : null, loseLevel, canRescue ? startRescue : null);
+        });
       } else {
-        setTimeout(loseLevel, 350);
+        later(loseLevel);
       }
     }
   }
 
+  // Sepette yer açabilecek, elde olan bir joker var mı? (Karıştır yer açmaz)
+  function rescuePossible() {
+    var j = RT.save.jokers, trayN = S.tray.length;
+    return (j.undo > 0 && S.history.length > 0) ||
+           (j.remove > 0 && trayN > 0 && S.bank.length + Math.min(3, trayN) <= RT.CONFIG.BANK_MAX) ||
+           (j.expand > 0 && !S.expanded);
+  }
+
+  // Pencere kapanır, oyuncu jokerlerle sepette yer açabilir
+  function startRescue() {
+    S.over = false;
+    S.trayFull = false;
+    S.rescue = true;
+    RT.ui.toast(RT.t("rescueHint"));
+  }
+
+  // Kurtarma sırasında yer açılamadıysa (joker başarısız / satın alınmadı) pencereyi yeniden göster
+  RT.game.recheck = function () {
+    if (!S || !S.rescue || S.over) return;
+    if (S.tray.length < S.trayMax) { S.rescue = false; return; }
+    S.rescue = false;
+    checkEnd();
+  };
+
   function loseLevel() {
+    if (S.lost) return; // aynı kayıp iki kez sayılmasın
+    S.lost = true;
+    S.over = true;
     RT.spendLife();
     RT.sfx("lose");
     RT.ui.showLose(S.level);
@@ -209,6 +262,8 @@
     });
     S.history = [];
     S.over = false;
+    S.trayFull = false;
+    S.rescue = false;
     renderBoard(); renderTray();
   }
 
@@ -266,7 +321,12 @@
 
   RT.game.useJoker = function (name) {
     if (!S || S.over) return;
-    if (RT.save.jokers[name] <= 0) { RT.ui.offerJoker(name); return; }
+    if (S.rescue && name === "shuffle") { toast(RT.t("rescueHint")); return; }
+    if (RT.save.jokers[name] <= 0) {
+      // Kurtarma sırasında satın almadan kapatılırsa "Sepet Doldu" penceresi geri gelir
+      RT.ui.offerJoker(name, S.rescue ? RT.game.recheck : null);
+      return;
+    }
     var res = JOKERS[name]();
     if (res === true) {
       RT.save.jokers[name]--;
@@ -274,6 +334,10 @@
       RT.sfx("joker");
     }
     RT.game.renderJokers();
+    if (S.rescue) {
+      if (S.tray.length < S.trayMax) S.rescue = false;       // yer açıldı, oyun sürüyor
+      else setTimeout(RT.game.recheck, 900);                 // açılamadı: seçenekler yeniden
+    }
   };
 
   function toast(txt) { RT.sfx("error"); RT.ui.toast(txt); }

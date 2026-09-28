@@ -61,7 +61,17 @@
       b.addEventListener("click", function () { RT.sfx("click"); handlers[b.dataset.m] && handlers[b.dataset.m](b); });
     });
   }
-  function closeModal() { modal.hidden = true; card.innerHTML = ""; }
+  function closeModal() {
+    modal.hidden = true;
+    card.innerHTML = "";
+    // Güvenlik ağı: pencere kapandıktan sonra oyun ekranında BİTMİŞ bir oyun
+    // kalıyorsa (dokunulamaz, joker kullanılamaz) oyuncuyu ana menüye al.
+    // Aynı tıklamada yeni bir pencere/seviye açılabileceği için kısa gecikmeyle bakılır.
+    setTimeout(function () {
+      if (modal.hidden && RT.game.isFinished() &&
+          document.getElementById("screen-game").classList.contains("active")) show("menu");
+    }, 0);
+  }
   RT.ui.closeModal = closeModal;
 
   var handlers = {}; // her modal kendi butonlarını buraya bağlar
@@ -76,7 +86,7 @@
   // ---------- Oyun başlatma ----------
   function play() {
     RT.tickLives();
-    if (RT.save.lives <= 0) { showNoLives(); return; }
+    if (RT.save.lives <= 0) { showLives({ resume: play }); return; }
     var fresh = RT.newTilesAt(RT.save.level);
     if (fresh.length && RT.unlockedCount(RT.save.level) > RT.save.discovered) {
       showDiscovery(fresh);
@@ -130,14 +140,17 @@
   };
 
   // ---------- Sepet doldu: reklam izle, devam et ----------
-  RT.ui.showContinue = function (onContinue, onGiveUp) {
+  // onContinue: null ise (bu seviyede zaten devam edildiyse) devam seçenekleri gizlenir
+  // onRescue: elde yer açabilecek joker varsa "Joker Kullan" seçeneği
+  RT.ui.showContinue = function (onContinue, onGiveUp, onRescue) {
     var price = RT.CONFIG.CONTINUE_PRICE;
+    handlers.rescue = function () { closeModal(); onRescue(); };
     handlers.continueAd = function () { watchAd(function () { closeModal(); onContinue(); }); };
     handlers.continueCoins = function () {
       if (!RT.spendCoins(price)) {
         RT.ui.toast(RT.t("notEnoughCoins"));
         // Mağaza kapanınca bu pencereye geri dön (oyun yarıda kalmasın)
-        showShop(function () { RT.ui.showContinue(onContinue, onGiveUp); });
+        showShop(function () { RT.ui.showContinue(onContinue, onGiveUp, onRescue); });
         return;
       }
       refreshHud(); closeModal(); onContinue();
@@ -146,9 +159,12 @@
     openModal(
       '<div class="m-emoji">🫧</div>' +
       "<h2>" + RT.t("continueTitle") + "</h2>" +
-      "<p>" + RT.t("continueText") + "</p>" +
-      '<button class="btn btn-blue" data-m="continueAd">📺 ' + RT.t("continueAd") + "</button>" +
-      '<button class="btn btn-soft" data-m="continueCoins">' + RT.t("continueCoins", { c: price }) + "</button>" +
+      "<p>" + RT.t(onContinue ? "continueText" : "rescueText") + "</p>" +
+      (onRescue ? '<button class="btn btn-green" data-m="rescue">🃏 ' + RT.t("rescueJoker") + "</button>" : "") +
+      (onContinue
+        ? '<button class="btn btn-blue" data-m="continueAd">📺 ' + RT.t("continueAd") + "</button>" +
+          '<button class="btn btn-soft" data-m="continueCoins">' + RT.t("continueCoins", { c: price }) + "</button>"
+        : "") +
       '<button class="btn btn-danger" data-m="giveUp">' + RT.t("giveUp") + "</button>" +
       '<p class="small">' + RT.t("yourCoins") + " 🪙 " + RT.save.coins + "</p>"
     );
@@ -157,7 +173,7 @@
   // ---------- Duraklatma ----------
   function showPause() {
     handlers.resume = closeModal;
-    handlers.quit = function () { RT.spendLife(); closeModal(); show("menu"); };
+    handlers.quit = function () { RT.game.quit(); closeModal(); show("menu"); };
     handlers.settings = showSettings;
     openModal(
       "<h2>" + RT.t("pauseTitle") + "</h2>" +
@@ -171,21 +187,24 @@
   // ---------- Canlar penceresi ----------
   // Can bittiğinde ve can göstergesine dokunulduğunda açılır: sıradaki canın
   // süresi, reklamla +1 can (sınırsız) ve eksik canları coinle doldurma.
-  function showLives() {
+  // opts.resume: can kazanılınca çağrılır (ör. "Oyna"dan gelindiyse seviye başlar)
+  function showLives(opts) {
+    opts = opts && opts.resume ? opts : {};
     RT.tickLives();
     var s = RT.save, full = s.lives >= RT.CONFIG.LIVES_MAX, price = RT.refillPrice();
     handlers.close = closeModal;
     handlers.ad = function () {
-      watchAd(function () { RT.addLives(1); refreshHud(); showLives(); RT.ui.toast(RT.t("adDone")); });
+      watchAd(function () { RT.addLives(1); refreshHud(); RT.ui.toast(RT.t("adDone")); afterGain(); });
     };
     handlers.refill = function () {
-      if (!RT.spendCoins(RT.refillPrice())) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(showLives); return; }
-      RT.addLives(RT.CONFIG.LIVES_MAX); refreshHud(); showLives();
+      if (!RT.spendCoins(RT.refillPrice())) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(function () { showLives(opts); }); return; }
+      RT.addLives(RT.CONFIG.LIVES_MAX); refreshHud(); afterGain();
     };
     handlers.oneLife = function () {
-      if (!RT.spendCoins(RT.CONFIG.LIFE_PRICE)) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(showLives); return; }
-      RT.addLives(1); refreshHud(); showLives();
+      if (!RT.spendCoins(RT.CONFIG.LIFE_PRICE)) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(function () { showLives(opts); }); return; }
+      RT.addLives(1); refreshHud(); afterGain();
     };
+    function afterGain() { if (opts.resume) { closeModal(); opts.resume(); } else showLives(); }
     var hearts = "";
     for (var i = 0; i < RT.CONFIG.LIVES_MAX; i++) {
       hearts += '<img class="lh' + (i < s.lives ? "" : " empty") + '" src="assets/ui/heart.png" alt="">';
@@ -204,7 +223,6 @@
     );
   }
   RT.ui.showLives = showLives;
-  var showNoLives = showLives;
 
   // Sahte reklam: gerçek reklam SDK'sı (ör. AdMob "ödüllü reklam") mobil pakette
   // eklenecek. Şimdilik AD_SKIP_SEC saniye geri sayım, sonra "Reklamı Geç" butonu;
@@ -286,11 +304,12 @@
 
   // ---------- Joker satın alma ----------
   var JOKER_NAME_KEY = { undo: "jUndo", remove: "jRemove", shuffle: "jShuffle", expand: "jExpand" };
-  RT.ui.offerJoker = function (name) {
-    handlers.close = closeModal;
+  // onDismiss: satın almadan kapatılırsa çağrılır (kurtarma modunda pencereyi geri getirmek için)
+  RT.ui.offerJoker = function (name, onDismiss) {
+    handlers.close = function () { closeModal(); if (onDismiss) onDismiss(); };
     function grant() { RT.save.jokers[name]++; RT.persist(); closeModal(); refreshHud(); RT.game.renderJokers(); }
     handlers.buyJoker = function () {
-      if (!RT.spendCoins(RT.CONFIG.JOKER_PRICE)) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(function () { RT.ui.offerJoker(name); }); return; }
+      if (!RT.spendCoins(RT.CONFIG.JOKER_PRICE)) { RT.ui.toast(RT.t("notEnoughCoins")); showShop(function () { RT.ui.offerJoker(name, onDismiss); }); return; }
       grant();
     };
     handlers.adJoker = function () { watchAd(function () { grant(); RT.ui.toast(RT.t("jokerAdDone")); }); };
